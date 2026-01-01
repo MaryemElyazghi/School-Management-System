@@ -33,11 +33,20 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // API Auth
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // H2 Console
                         .requestMatchers("/h2-console/**").permitAll()
+
+                        // Pages Web Thymeleaf - ACCESSIBLE SANS AUTHENTIFICATION
+                        .requestMatchers("/", "/web/**", "/css/**", "/js/**", "/images/**").permitAll()
+
+                        // API REST - Authentification requise
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -45,11 +54,14 @@ public class SecurityConfig {
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .headers(headers -> headers.frameOptions().disable()); // Pour H2 Console
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions
+                                .sameOrigin()
+                        )
+                ); // Pour H2 Console
 
         return http.build();
     }
-
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -67,4 +79,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+
 }
