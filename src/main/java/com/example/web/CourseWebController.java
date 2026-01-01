@@ -1,0 +1,129 @@
+package com.example.web;
+
+import com.example.dto.CourseDTO;
+import com.example.entity.Course;
+import com.example.repository.CourseRepository;
+import com.example.service.CourseService;
+import com.example.service.DepartmentService;
+import com.example.service.EnrollmentService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping("/web/courses")
+@RequiredArgsConstructor
+public class CourseWebController {
+
+    private final CourseService courseService;
+    private final DepartmentService departmentService;
+    private final EnrollmentService enrollmentService;
+    private final CourseRepository courseRepository;
+
+    @GetMapping
+    public String listCourses(Model model) {
+        model.addAttribute("courses", courseService.getAllCourses());
+        model.addAttribute("pageTitle", "Liste des Cours");
+        return "courses/list";
+    }
+
+    @GetMapping("/new")
+    public String showCreateForm(Model model) {
+        model.addAttribute("course", new CourseDTO());
+        model.addAttribute("departments", departmentService.getAllDepartments());
+        model.addAttribute("pageTitle", "Ajouter un Cours");
+        model.addAttribute("isEdit", false);
+        return "courses/form";
+    }
+
+    @PostMapping
+    public String createCourse(
+            @Valid @ModelAttribute("course") CourseDTO courseDTO,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        if (result.hasErrors()) {
+            model.addAttribute("departments", departmentService.getAllDepartments());
+            model.addAttribute("pageTitle", "Ajouter un Cours");
+            model.addAttribute("isEdit", false);
+            return "courses/form";
+        }
+
+        try {
+            courseService.createCourse(courseDTO);
+            redirectAttributes.addFlashAttribute("success", "Cours créé avec succès!");
+            return "redirect:/web/courses";
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("departments", departmentService.getAllDepartments());
+            model.addAttribute("pageTitle", "Ajouter un Cours");
+            model.addAttribute("isEdit", false);
+            return "courses/form";
+        }
+    }
+
+    @GetMapping("/{id}/edit")
+    public String showEditForm(@PathVariable Long id, Model model) {
+        CourseDTO course = courseService.getCourseById(id);
+        model.addAttribute("course", course);
+        model.addAttribute("departments", departmentService.getAllDepartments());
+        model.addAttribute("pageTitle", "Modifier le Cours");
+        model.addAttribute("isEdit", true);
+        return "courses/form";
+    }
+
+    @PostMapping("/{id}")
+    public String updateCourse(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("course") CourseDTO courseDTO,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        if (result.hasErrors()) {
+            model.addAttribute("departments", departmentService.getAllDepartments());
+            model.addAttribute("pageTitle", "Modifier le Cours");
+            model.addAttribute("isEdit", true);
+            return "courses/form";
+        }
+
+        try {
+            courseService.updateCourse(id, courseDTO);
+            redirectAttributes.addFlashAttribute("success", "Cours modifié avec succès!");
+            return "redirect:/web/courses";
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("departments", departmentService.getAllDepartments());
+            model.addAttribute("pageTitle", "Modifier le Cours");
+            model.addAttribute("isEdit", true);
+            return "courses/form";
+        }
+    }
+
+    @GetMapping("/{id}")
+    public String showCourseDetails(@PathVariable Long id, Model model) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        model.addAttribute("course", course);
+        model.addAttribute("enrollments", enrollmentService.getCourseEnrollments(id));
+        model.addAttribute("pageTitle", "Détails du Cours");
+        return "courses/details";
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteCourse(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            courseService.deleteCourse(id);
+            redirectAttributes.addFlashAttribute("success", "Cours supprimé avec succès!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Erreur: " + e.getMessage());
+        }
+        return "redirect:/web/courses";
+    }
+}

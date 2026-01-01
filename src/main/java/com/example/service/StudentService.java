@@ -2,15 +2,18 @@ package com.example.service;
 
 import com.example.dto.StudentDTO;
 import com.example.entity.Department;
+import com.example.entity.DossierAdministratif;
 import com.example.entity.Student;
 import com.example.exception.BusinessException;
 import com.example.exception.ResourceNotFoundException;
 import com.example.repository.DepartmentRepository;
+import com.example.repository.DossierAdministratifRepository;
 import com.example.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,7 @@ public class StudentService {
 
     private final StudentRepository studentRepository;
     private final DepartmentRepository departmentRepository;
+    private final DossierAdministratifRepository dossierRepository;
 
     public List<StudentDTO> getAllStudents() {
         return studentRepository.findAll()
@@ -53,7 +57,25 @@ public class StudentService {
         }
 
         Student student = convertToEntity(studentDTO);
+
+        // Sauvegarder l'étudiant d'abord pour obtenir l'ID
         Student savedStudent = studentRepository.save(student);
+
+        // CRÉATION AUTOMATIQUE DU DOSSIER ADMINISTRATIF
+        DossierAdministratif dossier = new DossierAdministratif();
+        dossier.setDateCreation(LocalDate.now());
+        dossier.setStudent(savedStudent);
+
+        // Générer le numéro d'inscription: FILIERE-ANNEE-ID
+        String departmentCode = savedStudent.getDepartment().getCode();
+        dossier.generateNumeroInscription(departmentCode, savedStudent.getId());
+
+        // Sauvegarder le dossier
+        dossierRepository.save(dossier);
+
+        // Mettre à jour l'étudiant avec le dossier
+        savedStudent.setDossierAdministratif(dossier);
+
         return convertToDTO(savedStudent);
     }
 
@@ -116,8 +138,14 @@ public class StudentService {
 
         dto.setFullName(student.getFullName());
 
+        // Ajouter le numéro d'inscription si le dossier existe
+        if (student.getDossierAdministratif() != null) {
+            // On peut ajouter un champ dans StudentDTO si nécessaire
+        }
+
         return dto;
     }
+
 
     private Student convertToEntity(StudentDTO dto) {
         Student student = new Student();
