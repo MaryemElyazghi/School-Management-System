@@ -15,28 +15,28 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/" th:classappend="${#httpServletRequest.requestURI == '/'} ? 'active' : ''">
+                    <a class="nav-link" href="/" th:classappend="${currentUri == '/'} ? 'active' : ''">
                         <i class="bi bi-house-fill"></i> Accueil
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link" href="/web/students"
-                       th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/students')} ? 'active' : ''">
+                       th:classappend="${#strings.contains(currentUri, '/students')} ? 'active' : ''">
                         <i class="bi bi-people-fill"></i> Élèves
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link" href="/web/departments"
-                       th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/departments')} ? 'active' : ''">
+                       th:classappend="${#strings.contains(currentUri, '/departments')} ? 'active' : ''">
                         <i class="bi bi-diagram-3-fill"></i> Filières
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link" href="/web/courses"
-                       th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/courses')} ? 'active' : ''">
+                       th:classappend="${#strings.contains(currentUri, '/courses')} ? 'active' : ''">
                         <i class="bi bi-book-fill"></i> Cours
                     </a>
                 </li>
