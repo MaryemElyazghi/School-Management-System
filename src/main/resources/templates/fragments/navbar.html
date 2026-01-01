@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-mortarboard-fill"></i> School Management
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/" th:classappend="${#httpServletRequest.requestURI == '/'} ? 'active' : ''">
+                        <i class="bi bi-house-fill"></i> Accueil
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/web/students"
+                       th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/students')} ? 'active' : ''">
+                        <i class="bi bi-people-fill"></i> Élèves
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/web/departments"
+                       th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/departments')} ? 'active' : ''">
+                        <i class="bi bi-diagram-3-fill"></i> Filières
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/web/courses"
+                       th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/courses')} ? 'active' : ''">
+                        <i class="bi bi-book-fill"></i> Cours
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/h2-console" target="_blank">
+                        <i class="bi bi-database"></i> H2 Console
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Détails Élève'))}"></head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container my-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="bi bi-person-circle text-primary"></i>
+                Détails de l'Élève
+            </h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/web/students" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+            <a th:href="@{/web/students/{id}/edit(id=${student.id})}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row">
+        <!-- Informations Personnelles -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-badge"></i> Informations Personnelles
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Numéro Étudiant :</th>
+                            <td><strong th:text="${student.studentNumber}"></strong></td>
+                        </tr>
+                        <tr>
+                            <th>Nom Complet :</th>
+                            <td th:text="${student.fullName}"></td>
+                        </tr>
+                        <tr>
+                            <th>Email :</th>
+                            <td>
+                                <a th:href="'mailto:' + ${student.email}" th:text="${student.email}"></a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Téléphone :</th>
+                            <td th:text="${student.phone} ?: '-'"></td>
+                        </tr>
+                        <tr>
+                            <th>Date de Naissance :</th>
+                            <td th:text="${student.dateOfBirth != null ? #temporals.format(student.dateOfBirth, 'dd/MM/yyyy') : '-'}"></td>
+                        </tr>
+                        <tr>
+                            <th>Date d'Inscription :</th>
+                            <td th:text="${student.enrollmentDate != null ? #temporals.format(student.enrollmentDate, 'dd/MM/yyyy') : '-'}"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filière et Dossier Administratif -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-diagram-3"></i> Filière & Dossier Administratif
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">Filière</h6>
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Nom :</th>
+                            <td th:text="${student.department.name}"></td>
+                        </tr>
+                        <tr>
+                            <th>Code :</th>
+                            <td>
+                                <span class="badge bg-success" th:text="${student.department.code}"></span>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <hr>
+
+                    <h6 class="text-muted mb-3">Dossier Administratif</h6>
+                    <div th:if="${student.dossierAdministratif != null}">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Numéro d'Inscription :</th>
+                                <td>
+                                        <span class="badge bg-info"
+                                              th:text="${student.dossierAdministratif.numeroInscription}"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Date de Création :</th>
+                                <td th:text="${#temporals.format(student.dossierAdministratif.dateCreation, 'dd/MM/yyyy')}"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div th:unless="${student.dossierAdministratif != null}">
+                        <p class="text-muted">Aucun dossier administratif</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cours Suivis -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="bi bi-book"></i> Cours Suivis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Code</th>
+                                <th>Intitulé</th>
+                                <th>Crédits</th>
+                                <th>Date d'Inscription</th>
+                                <th>Statut</th>
+                                <th>Note</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${enrollments.empty}">
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    Aucun cours suivi pour le moment
+                                </td>
+                            </tr>
+                            <tr th:each="enrollment : ${enrollments}">
+                                <td><strong th:text="${enrollment.courseCode}"></strong></td>
+                                <td th:text="${enrollment.courseName}"></td>
+                                <td th:text="${enrollment.course?.credits}"></td>
+                                <td th:text="${#temporals.format(enrollment.enrollmentDate, 'dd/MM/yyyy')}"></td>
+                                <td>
+                                            <span class="badge"
+                                                  th:classappend="${enrollment.status == T(com.example.entity.Enrollment.EnrollmentStatus).ACTIVE} ? 'bg-success' :
+                                                                   ${enrollment.status == T(com.example.entity.Enrollment.EnrollmentStatus).COMPLETED} ? 'bg-primary' :
+                                                                   ${enrollment.status == T(com.example.entity.Enrollment.EnrollmentStatus).FAILED} ? 'bg-danger' : 'bg-secondary'"
+                                                  th:text="${enrollment.status}"></span>
+                                </td>
+                                <td>
+                                            <span th:if="${enrollment.grade != null}"
+                                                  th:text="${enrollment.grade} + '/20'"
+                                                  th:classappend="${enrollment.grade >= 10} ? 'text-success fw-bold' : 'text-danger fw-bold'"></span>
+                                    <span th:unless="${enrollment.grade != null}" class="text-muted">-</span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

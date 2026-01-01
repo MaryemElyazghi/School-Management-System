@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container my-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="bi bi-people-fill text-primary"></i>
+                Liste des Élèves
+            </h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/web/students/new" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Ajouter un Élève
+            </a>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Numéro Étudiant</th>
+                        <th>Nom Complet</th>
+                        <th>Email</th>
+                        <th>Filière</th>
+                        <th>Date d'Inscription</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${students.empty}">
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                            <p class="mt-2 mb-0">Aucun élève trouvé</p>
+                        </td>
+                    </tr>
+                    <tr th:each="student : ${students}">
+                        <td>
+                            <strong th:text="${student.studentNumber}"></strong>
+                        </td>
+                        <td th:text="${student.fullName}"></td>
+                        <td>
+                            <a th:href="'mailto:' + ${student.email}"
+                               th:text="${student.email}"></a>
+                        </td>
+                        <td>
+                                    <span class="badge bg-primary"
+                                          th:text="${student.departmentName}"></span>
+                        </td>
+                        <td th:text="${#temporals.format(student.enrollmentDate, 'dd/MM/yyyy')}"></td>
+                        <td class="text-center table-actions">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a th:href="@{/web/students/{id}(id=${student.id})}"
+                                   class="btn btn-info btn-sm" title="Détails">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a th:href="@{/web/students/{id}/edit(id=${student.id})}"
+                                   class="btn btn-warning btn-sm" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form th:action="@{/web/students/{id}/delete(id=${student.id})}"
+                                      method="post" style="display: inline;"
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet élève ?');">
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
