@@ -12,11 +12,11 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StudentDTO {
+public class TeacherDTO {
     private Long id;
 
-    @NotBlank(message = "Student number is required")
-    private String studentNumber;
+    @NotBlank(message = "Employee number is required")
+    private String employeeNumber;
 
     @NotBlank(message = "First name is required")
     private String firstName;
@@ -29,8 +29,8 @@ public class StudentDTO {
     private String email;
 
     private String phone;
-    private LocalDate dateOfBirth;
-    private LocalDate enrollmentDate;
+    private String specialization;
+    private LocalDate hireDate;
 
     @NotNull(message = "Department is required")
     private Long departmentId;
@@ -38,6 +38,6 @@ public class StudentDTO {
     private String departmentName;
     private String fullName;
 
-    // Numéro d'inscription du dossier administratif
-    private String numeroInscription;
+    // Nombre de cours enseignés par ce professeur
+    private Integer courseCount;
 }

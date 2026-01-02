@@ -73,13 +73,17 @@ public class EnrollmentService {
 
     /**
      * Retourner (abandon) un cours
+     * RÈGLE MÉTIER: On ne peut abandonner que les cours ACTIFS
      */
     public EnrollmentDTO dropCourse(Long enrollmentId) {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment", "id", enrollmentId));
 
-        if (enrollment.getStatus() == Enrollment.EnrollmentStatus.COMPLETED) {
-            throw new BusinessException("Cannot drop a completed course");
+        // Validation: ne peut abandonner qu'un cours actif
+        if (enrollment.getStatus() != Enrollment.EnrollmentStatus.ACTIVE) {
+            throw new BusinessException(
+                    String.format("Cannot drop course. Current status is %s. Only ACTIVE courses can be dropped.",
+                            enrollment.getStatus()));
         }
 
         enrollment.setStatus(Enrollment.EnrollmentStatus.DROPPED);
@@ -136,19 +140,78 @@ public class EnrollmentService {
 
     /**
      * Attribuer une note
+     * RÈGLE MÉTIER: Une note ne peut être attribuée qu'une seule fois sauf modification explicite
      */
     public EnrollmentDTO assignGrade(Long enrollmentId, Double grade) {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment", "id", enrollmentId));
 
+        // Validation: ne peut pas noter un cours abandonné
+        if (enrollment.getStatus() == Enrollment.EnrollmentStatus.DROPPED) {
+            throw new BusinessException("Cannot assign grade to a dropped enrollment");
+        }
+
+        // Validation: la note doit être entre 0 et 20
         if (grade < 0 || grade > 20) {
             throw new BusinessException("Grade must be between 0 and 20");
+        }
+
+        // Validation: protection contre la double notation
+        if (enrollment.getGrade() != null &&
+                (enrollment.getStatus() == Enrollment.EnrollmentStatus.COMPLETED ||
+                        enrollment.getStatus() == Enrollment.EnrollmentStatus.FAILED)) {
+            throw new BusinessException(
+                    String.format("Grade already assigned (%.2f). Use updateGrade to modify an existing grade.",
+                            enrollment.getGrade()));
         }
 
         enrollment.setGrade(grade);
 
         // Si la note est >= 10, marquer comme COMPLETED, sinon FAILED
         if (grade >= 10) {
+            enrollment.setStatus(Enrollment.EnrollmentStatus.COMPLETED);
+        } else {
+            enrollment.setStatus(Enrollment.EnrollmentStatus.FAILED);
+        }
+
+        Enrollment updated = enrollmentRepository.save(enrollment);
+
+        return convertToDTO(updated);
+    }
+
+    /**
+     * Modifier une note existante (pour corrections)
+     * RÈGLE MÉTIER: Permet de modifier une note déjà attribuée
+     */
+    public EnrollmentDTO updateGrade(Long enrollmentId, Double newGrade, String reason) {
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Enrollment", "id", enrollmentId));
+
+        // Validation: doit avoir une note existante
+        if (enrollment.getGrade() == null) {
+            throw new BusinessException("No existing grade to update. Use assignGrade for initial grading.");
+        }
+
+        // Validation: ne peut pas modifier un cours abandonné
+        if (enrollment.getStatus() == Enrollment.EnrollmentStatus.DROPPED) {
+            throw new BusinessException("Cannot update grade for a dropped enrollment");
+        }
+
+        // Validation: la note doit être entre 0 et 20
+        if (newGrade < 0 || newGrade > 20) {
+            throw new BusinessException("Grade must be between 0 and 20");
+        }
+
+        // Validation: une raison doit être fournie pour la modification
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new BusinessException("A reason must be provided for grade modification");
+        }
+
+        Double oldGrade = enrollment.getGrade();
+        enrollment.setGrade(newGrade);
+
+        // Mettre à jour le statut en fonction de la nouvelle note
+        if (newGrade >= 10) {
             enrollment.setStatus(Enrollment.EnrollmentStatus.COMPLETED);
         } else {
             enrollment.setStatus(Enrollment.EnrollmentStatus.FAILED);

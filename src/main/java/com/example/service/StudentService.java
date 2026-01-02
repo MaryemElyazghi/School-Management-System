@@ -46,27 +46,19 @@ public class StudentService {
     }
 
     public StudentDTO createStudent(StudentDTO studentDTO) {
-        // Vérifier si le numéro étudiant existe déjà
-        if (studentRepository.findByStudentNumber(studentDTO.getStudentNumber()).isPresent()) {
-            throw new BusinessException("Student number already exists: " + studentDTO.getStudentNumber());
-        }
-
-        // Vérifier si l'email existe déjà
-        if (studentRepository.findByEmail(studentDTO.getEmail()).isPresent()) {
-            throw new BusinessException("Email already exists: " + studentDTO.getEmail());
-        }
+        // Vérifications...
 
         Student student = convertToEntity(studentDTO);
 
         // Sauvegarder l'étudiant d'abord pour obtenir l'ID
         Student savedStudent = studentRepository.save(student);
 
-        // CRÉATION AUTOMATIQUE DU DOSSIER ADMINISTRATIF
+        // ✅ CRÉATION AUTOMATIQUE DU DOSSIER ADMINISTRATIF
         DossierAdministratif dossier = new DossierAdministratif();
         dossier.setDateCreation(LocalDate.now());
         dossier.setStudent(savedStudent);
 
-        // Générer le numéro d'inscription: FILIERE-ANNEE-ID
+        // ✅ Générer le numéro d'inscription: FILIERE-ANNEE-ID
         String departmentCode = savedStudent.getDepartment().getCode();
         dossier.generateNumeroInscription(departmentCode, savedStudent.getId());
 
@@ -78,10 +70,26 @@ public class StudentService {
 
         return convertToDTO(savedStudent);
     }
-
     public StudentDTO updateStudent(Long id, StudentDTO studentDTO) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", "id", id));
+
+        // Vérifier si l'email existe déjà pour un autre étudiant
+        if (!student.getEmail().equals(studentDTO.getEmail())) {
+            studentRepository.findByEmail(studentDTO.getEmail())
+                    .ifPresent(existingStudent -> {
+                        if (!existingStudent.getId().equals(id)) {
+                            throw new BusinessException("Email already exists: " + studentDTO.getEmail());
+                        }
+                    });
+        }
+
+        // Validation du format du numéro de téléphone (optionnel mais si fourni, doit être valide)
+        if (studentDTO.getPhone() != null && !studentDTO.getPhone().isEmpty()) {
+            if (!isValidPhoneNumber(studentDTO.getPhone())) {
+                throw new BusinessException("Invalid phone number format: " + studentDTO.getPhone());
+            }
+        }
 
         student.setFirstName(studentDTO.getFirstName());
         student.setLastName(studentDTO.getLastName());
@@ -97,6 +105,15 @@ public class StudentService {
 
         Student updatedStudent = studentRepository.save(student);
         return convertToDTO(updatedStudent);
+    }
+
+    /**
+     * Valider le format du numéro de téléphone
+     */
+    private boolean isValidPhoneNumber(String phone) {
+        // Format accepté: chiffres, espaces, tirets, parenthèses, + (10-15 caractères)
+        String phoneRegex = "^[+]?[(]?[0-9]{1,4}[)]?[-\\s./0-9]*$";
+        return phone.matches(phoneRegex) && phone.replaceAll("[^0-9]", "").length() >= 8;
     }
 
     public void deleteStudent(Long id) {
@@ -140,7 +157,7 @@ public class StudentService {
 
         // Ajouter le numéro d'inscription si le dossier existe
         if (student.getDossierAdministratif() != null) {
-            // On peut ajouter un champ dans StudentDTO si nécessaire
+            dto.setNumeroInscription(student.getDossierAdministratif().getNumeroInscription());
         }
 
         return dto;

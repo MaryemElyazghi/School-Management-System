@@ -4,9 +4,11 @@ import com.example.dto.CourseDTO;
 import com.example.entity.Course;
 import com.example.entity.Department;
 import com.example.entity.Teacher;
+import com.example.exception.BusinessException;
 import com.example.exception.ResourceNotFoundException;
 import com.example.repository.CourseRepository;
 import com.example.repository.DepartmentRepository;
+import com.example.repository.EnrollmentRepository;
 import com.example.repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -24,6 +26,7 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final DepartmentRepository departmentRepository;
     private final TeacherRepository teacherRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     /**
      * RÈGLE MÉTIER : Un étudiant ne peut voir QUE les cours de SA filière
@@ -86,6 +89,21 @@ public class CourseService {
     }
 
     public CourseDTO createCourse(CourseDTO courseDTO) {
+        // Vérifier si le code du cours existe déjà
+        if (courseRepository.findByCode(courseDTO.getCode()).isPresent()) {
+            throw new BusinessException("Course code already exists: " + courseDTO.getCode());
+        }
+
+        // Validation: maxStudents doit être positif
+        if (courseDTO.getMaxStudents() != null && courseDTO.getMaxStudents() <= 0) {
+            throw new BusinessException("Maximum students must be a positive number");
+        }
+
+        // Validation: credits doit être positif
+        if (courseDTO.getCredits() != null && courseDTO.getCredits() <= 0) {
+            throw new BusinessException("Credits must be a positive number");
+        }
+
         Course course = convertToEntity(courseDTO);
         Course savedCourse = courseRepository.save(course);
         return convertToDTO(savedCourse);
@@ -94,6 +112,36 @@ public class CourseService {
     public CourseDTO updateCourse(Long id, CourseDTO courseDTO) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course", "id", id));
+
+        // Vérifier si le code du cours existe déjà pour un autre cours
+        if (!course.getCode().equals(courseDTO.getCode())) {
+            courseRepository.findByCode(courseDTO.getCode())
+                    .ifPresent(existingCourse -> {
+                        if (!existingCourse.getId().equals(id)) {
+                            throw new BusinessException("Course code already exists: " + courseDTO.getCode());
+                        }
+                    });
+        }
+
+        // Validation: maxStudents doit être positif
+        if (courseDTO.getMaxStudents() != null && courseDTO.getMaxStudents() <= 0) {
+            throw new BusinessException("Maximum students must be a positive number");
+        }
+
+        // Validation: credits doit être positif
+        if (courseDTO.getCredits() != null && courseDTO.getCredits() <= 0) {
+            throw new BusinessException("Credits must be a positive number");
+        }
+
+        // Validation: ne pas réduire maxStudents en dessous du nombre d'inscrits actuels
+        if (courseDTO.getMaxStudents() != null) {
+            long currentEnrollments = enrollmentRepository.countByCourseId(id);
+            if (courseDTO.getMaxStudents() < currentEnrollments) {
+                throw new BusinessException(
+                        String.format("Cannot set max students to %d. There are already %d students enrolled.",
+                                courseDTO.getMaxStudents(), currentEnrollments));
+            }
+        }
 
         course.setName(courseDTO.getName());
         course.setCode(courseDTO.getCode());
@@ -120,6 +168,15 @@ public class CourseService {
     public void deleteCourse(Long id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course", "id", id));
+
+        // Vérifier s'il y a des inscriptions pour ce cours
+        long enrollmentCount = enrollmentRepository.countByCourseId(id);
+        if (enrollmentCount > 0) {
+            throw new BusinessException(
+                    String.format("Cannot delete course '%s'. There are %d enrollment(s) associated with it.",
+                            course.getName(), enrollmentCount));
+        }
+
         courseRepository.delete(course);
     }
 

@@ -16,73 +16,45 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/" th:classappend="${currentUri == '/'} ? 'active' : ''">
+                    <a class="nav-link" href="/">
                         <i class="bi bi-house-fill"></i> Accueil
                     </a>
                 </li>
 
-                <!-- Menu visible uniquement pour les utilisateurs authentifiés -->
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <a class="nav-link" href="/web/students"
-                       th:classappend="${currentUri != null && #strings.contains(currentUri, '/students')} ? 'active' : ''">
+                <li class="nav-item">
+                    <a class="nav-link" href="/web/students">
                         <i class="bi bi-people-fill"></i> Élèves
                     </a>
                 </li>
 
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <a class="nav-link" href="/web/departments"
-                       th:classappend="${currentUri != null && #strings.contains(currentUri, '/departments')} ? 'active' : ''">
+                <li class="nav-item">
+                    <a class="nav-link" href="/web/departments">
                         <i class="bi bi-diagram-3-fill"></i> Filières
                     </a>
                 </li>
 
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <a class="nav-link" href="/web/courses"
-                       th:classappend="${currentUri != null && #strings.contains(currentUri, '/courses')} ? 'active' : ''">
+                <li class="nav-item">
+                    <a class="nav-link" href="/web/courses">
                         <i class="bi bi-book-fill"></i> Cours
                     </a>
                 </li>
             </ul>
 
             <ul class="navbar-nav">
-                <!-- Lien H2 Console pour admin -->
-                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                <li class="nav-item">
                     <a class="nav-link" href="/h2-console" target="_blank">
                         <i class="bi bi-database"></i> H2 Console
                     </a>
                 </li>
 
-                <!-- Utilisateur connecté -->
-                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle"></i>
-                        <span sec:authentication="name">Utilisateur</span>
-                        <span class="badge bg-light text-primary ms-1" sec:authentication="principal.role">ROLE</span>
+                <!-- BOUTON DE DÉCONNEXION VISIBLE -->
+                <li class="nav-item">
+                    <a class="nav-link text-warning" href="/logout"
+                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        <i class="bi bi-box-arrow-right"></i> Déconnexion
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li>
-                            <span class="dropdown-item-text">
-                                <small class="text-muted">Connecté en tant que</small><br>
-                                <strong sec:authentication="name">username</strong>
-                            </span>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form th:action="@{/logout}" method="post" class="d-inline">
-                                <button type="submit" class="dropdown-item text-danger">
-                                    <i class="bi bi-box-arrow-right"></i> Se déconnecter
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
-                </li>
-
-                <!-- Bouton de connexion pour les non-authentifiés -->
-                <li class="nav-item" sec:authorize="!isAuthenticated()">
-                    <a class="nav-link" th:href="@{/login}">
-                        <i class="bi bi-box-arrow-in-right"></i> Connexion
-                    </a>
+                    <form id="logout-form" action="/logout" method="POST" style="display: none;">
+                    </form>
                 </li>
             </ul>
         </div>
