@@ -39,20 +39,10 @@ public class DepartmentService {
     /**
      * ✅ Récupérer toutes les filières
      */
-// DepartmentService.java - MODIFIER getAllDepartments
     public List<DepartmentDTO> getAllDepartments() {
         return departmentRepository.findAll()
                 .stream()
-                .map(dept -> {
-                    DepartmentDTO dto = new DepartmentDTO();
-                    dto.setId(dept.getId());
-                    dto.setCode(dept.getCode());
-                    dto.setName(dept.getName());
-                    dto.setDescription(dept.getDescription());
-                    dto.setStudentCount(0);
-                    dto.setCourseCount(0);
-                    return dto;
-                })
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -286,27 +276,18 @@ public class DepartmentService {
         dto.setName(department.getName());
         dto.setDescription(department.getDescription());
 
-        try {
-            // ✅ Ajouter les statistiques si les collections sont chargées
-            if (department.getStudents() != null) {
-                dto.setStudentCount(department.getStudents().size());
-            } else {
-                dto.setStudentCount(0);
-            }
-        } catch (Exception e) {
+        // ✅ Ajouter les statistiques si les collections sont chargées
+        if (department.getStudents() != null) {
+            dto.setStudentCount(department.getStudents().size());
+        } else {
             dto.setStudentCount(0);
         }
 
-        try{
-            if (department.getCourses() != null) {
-                dto.setCourseCount(department.getCourses().size());
-            } else {
-                dto.setCourseCount(0);
-            }
-        } catch (Exception e) {
+        if (department.getCourses() != null) {
+            dto.setCourseCount(department.getCourses().size());
+        } else {
             dto.setCourseCount(0);
         }
-
 
         return dto;
     }
