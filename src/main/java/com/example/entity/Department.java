@@ -23,12 +23,12 @@ public class Department extends BaseEntity {
     @Column(length = 500)
     private String description;
 
-    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Course> courses = new ArrayList<>();
 
-    @OneToMany(mappedBy = "department")
+    @OneToMany(mappedBy = "department", fetch = FetchType.EAGER)
     private List<Student> students = new ArrayList<>();
 
-    @OneToMany(mappedBy = "department")
-    private List<Teacher> teachers = new ArrayList<>();
+//    @OneToMany(mappedBy = "department")
+//    private List<Teacher> teachers = new ArrayList<>();
 }

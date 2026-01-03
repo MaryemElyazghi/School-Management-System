@@ -17,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -54,14 +55,17 @@ public class DepartmentWebController {
      */
     @GetMapping
     public String listDepartments(Model model) {
-        List<DepartmentDTO> departments = departmentService.getAllDepartments();
-
-        model.addAttribute("departments", departments);
-        model.addAttribute("pageTitle", "Liste des Filières");
-
-        return "departments/list";
+        try {
+            List<DepartmentDTO> departments = departmentService.getAllDepartments();
+            model.addAttribute("departments", departments);
+            model.addAttribute("pageTitle", "Liste des Filières");
+            return "departments/list";
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur: " + e.getMessage());
+            model.addAttribute("departments", new ArrayList<>());
+            return "departments/list";
+        }
     }
-
     /**
      * ✅ Détails d'une filière avec listes des élèves et cours
      * URL: GET /web/departments/{id}
