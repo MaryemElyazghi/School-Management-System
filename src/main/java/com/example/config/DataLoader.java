@@ -21,6 +21,7 @@ public class DataLoader implements CommandLineRunner {
     private final TeacherRepository teacherRepository;
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final DossierAdministratifRepository dossierRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -236,8 +237,23 @@ public class DataLoader implements CommandLineRunner {
         student.setDateOfBirth(dob);
         student.setEnrollmentDate(LocalDate.now().minusYears(2));
         student.setDepartment(dept);
-        return studentRepository.save(student);
-    }
+        // Sauvegarder l'étudiant d'abord pour obtenir l'ID
+        Student savedStudent = studentRepository.save(student);
+
+        // ✅ CRÉATION AUTOMATIQUE DU DOSSIER ADMINISTRATIF
+        DossierAdministratif dossier = new DossierAdministratif();
+        dossier.setDateCreation(LocalDate.now());
+        dossier.setStudent(savedStudent);
+
+        // Générer le numéro d'inscription: FILIERE-ANNEE-ID
+        dossier.generateNumeroInscription(dept.getCode(), savedStudent.getId());
+
+        // Sauvegarder le dossier
+        DossierAdministratif savedDossier = dossierRepository.save(dossier);
+
+        // Lier le dossier à l'étudiant
+        savedStudent.setDossierAdministratif(savedDossier);
+        return studentRepository.save(savedStudent);    }
 
     private Teacher createTeacher(String empNumber, String firstName, String lastName,
                                   String email, String phone, String specialization, Department dept) {

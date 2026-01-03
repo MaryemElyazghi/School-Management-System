@@ -167,4 +167,21 @@ public class StudentWebController {
         }
         return "redirect:/web/students/" + studentId;
     }
+
+    // ========== DÉSINSCRIPTION D'UN COURS - ADMIN et TEACHER ==========
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @PostMapping("/{studentId}/drop/{enrollmentId}")
+    public String dropCourse(
+            @PathVariable Long studentId,
+            @PathVariable Long enrollmentId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            enrollmentService.dropCourse(enrollmentId);
+            redirectAttributes.addFlashAttribute("success", "Désinscription réussie!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/web/students/" + studentId;
+    }
 }

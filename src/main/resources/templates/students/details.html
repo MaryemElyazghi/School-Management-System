@@ -142,6 +142,7 @@
                 <div class="card-header bg-warning">
                     <h5 class="mb-0">
                         <i class="bi bi-book"></i> Cours Suivis
+                        <span class="badge bg-dark" th:text="${enrollments != null ? enrollments.size() : 0}">0</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -154,11 +155,12 @@
                                 <th>Date d'Inscription</th>
                                 <th>Statut</th>
                                 <th>Note</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr th:if="${enrollments == null || enrollments.empty}">
-                                <td colspan="5" class="text-center text-muted py-4">
+                                <td colspan="6" class="text-center text-muted py-4">
                                     Aucun cours suivi pour le moment
                                 </td>
                             </tr>
@@ -177,6 +179,26 @@
                                           th:text="${enrollment.grade} + '/20'"
                                           th:classappend="${enrollment.grade >= 10} ? 'text-success fw-bold' : 'text-danger fw-bold'">15/20</span>
                                     <span th:unless="${enrollment.grade != null}" class="text-muted">-</span>
+                                </td>
+
+                                <td class="text-center">
+                                    <!-- Voir le cours -->
+                                    <a th:href="@{/web/courses/{id}(id=${enrollment.courseId})}"
+                                       class="btn btn-sm btn-info" title="Voir le cours">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <!-- Se désinscrire - uniquement si ACTIVE et pour ADMIN/TEACHER -->
+                                    <form sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
+                                          th:if="${enrollment.status.name() == 'ACTIVE'}"
+                                          th:action="@{/web/students/{studentId}/drop/{enrollmentId}(studentId=${student.id}, enrollmentId=${enrollment.id})}"
+                                          method="post"
+                                          style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                title="Se désinscrire"
+                                                onclick="return confirm('Confirmer la désinscription de ce cours ?');">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             </tbody>
