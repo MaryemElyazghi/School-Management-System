@@ -18,6 +18,7 @@ public class EnrollmentDTO {
     private Long studentId;
 
     private String studentName;
+    private String studentNumber;
 
     @NotNull(message = "Course ID is required")
     private Long courseId;

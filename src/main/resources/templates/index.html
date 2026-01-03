@@ -58,7 +58,6 @@
                 </div>
             </div>
         </div>
-        </div>
 
         <!-- Card Filières -->
         <div class="col-md-4 mb-4">
@@ -70,11 +69,19 @@
                         Gérez les filières, consultez les élèves et les cours associés
                     </p>
                     <div class="d-grid gap-2">
-                        <a href="/web/departments" class="btn btn-success">
+                        <a      sec:authorize="isAuthenticated()"
+                                href="/web/departments" class="btn btn-success">
                             <i class="bi bi-list"></i> Liste des Filières
                         </a>
-                        <a href="/web/departments/new" class="btn btn-outline-success">
+                        <a      sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
+                                href="/web/departments/new" class="btn btn-outline-success">
                             <i class="bi bi-plus-circle"></i> Ajouter une Filière
+                        </a>
+                        <!-- Bouton connexion si non connecté -->
+                        <a sec:authorize="!isAuthenticated()"
+                           href="/login"
+                           class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right"></i> Se connecter
                         </a>
                     </div>
                 </div>
@@ -91,11 +98,19 @@
                         Gérez les cours et leur rattachement aux filières
                     </p>
                     <div class="d-grid gap-2">
-                        <a href="/web/courses" class="btn btn-warning">
+                        <a      sec:authorize="isAuthenticated()"
+                                href="/web/courses" class="btn btn-warning">
                             <i class="bi bi-list"></i> Liste des Cours
                         </a>
-                        <a href="/web/courses/new" class="btn btn-outline-warning">
+                        <a      sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
+                                href="/web/courses/new" class="btn btn-outline-warning">
                             <i class="bi bi-plus-circle"></i> Ajouter un Cours
+                        </a>
+                        <!-- Bouton connexion si non connecté -->
+                        <a sec:authorize="!isAuthenticated()"
+                           href="/login"
+                           class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right"></i> Se connecter
                         </a>
                     </div>
                 </div>

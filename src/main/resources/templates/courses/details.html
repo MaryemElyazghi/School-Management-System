@@ -143,7 +143,7 @@
                             </tr>
                             <tr th:each="enrollment : ${enrollments}">
                                 <td>
-                                    <strong th:text="${enrollment.student.studentNumber}"></strong>
+                                    <strong th:text="${enrollment.studentNumber*}"></strong>
                                 </td>
                                 <td th:text="${enrollment.studentName}"></td>
                                 <td th:text="${#temporals.format(enrollment.enrollmentDate, 'dd/MM/yyyy')}"></td>
@@ -161,7 +161,7 @@
                                     <span th:unless="${enrollment.grade != null}" class="text-muted">-</span>
                                 </td>
                                 <td class="text-center">
-                                    <a th:href="@{/web/students/{id}(id=${enrollment.student.id})}"
+                                    <a th:href="@{/web/students/{id}(id=${enrollment.studentId})}"
                                        class="btn btn-sm btn-info">
                                         <i class="bi bi-eye"></i> Voir Profil
                                     </a>

@@ -24,6 +24,7 @@ public class StudentWebController {
     private final StudentService studentService;
     private final DepartmentService departmentService;
     private final EnrollmentService enrollmentService;
+    private final CourseService courseService;
     private final StudentRepository studentRepository;
 
     // ========== CONSULTATION - Tous les utilisateurs authentifiés ==========
@@ -42,6 +43,14 @@ public class StudentWebController {
 
         model.addAttribute("student", student);
         model.addAttribute("enrollments", enrollmentService.getStudentEnrollments(id));
+
+        // Ajouter les cours disponibles de la filière de l'étudiant pour inscription
+        if (student.getDepartment() != null) {
+            model.addAttribute("availableCourses",
+                    courseService.getCoursesByDepartment(student.getDepartment().getId()));
+        }
+
+
         model.addAttribute("pageTitle", "Détails de l'Élève");
         return "students/details";
     }

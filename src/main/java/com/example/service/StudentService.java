@@ -59,14 +59,17 @@ public class StudentService {
         dossier.setStudent(savedStudent);
 
         // ✅ Générer le numéro d'inscription: FILIERE-ANNEE-ID
-        String departmentCode = savedStudent.getDepartment().getCode();
+        Department department = savedStudent.getDepartment();
+        String departmentCode = (department != null) ? department.getCode() : "UNKNOWN";
         dossier.generateNumeroInscription(departmentCode, savedStudent.getId());
 
         // Sauvegarder le dossier
-        dossierRepository.save(dossier);
+        DossierAdministratif savedDossier = dossierRepository.save(dossier);
 
-        // Mettre à jour l'étudiant avec le dossier
-        savedStudent.setDossierAdministratif(dossier);
+        // Mettre à jour l'étudiant avec le dossier et sauvegarder
+        savedStudent.setDossierAdministratif(savedDossier);
+        savedStudent = studentRepository.save(savedStudent);
+
 
         return convertToDTO(savedStudent);
     }

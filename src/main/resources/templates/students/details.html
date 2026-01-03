@@ -186,6 +186,82 @@
             </div>
         </div>
     </div>
+
+    <!-- Inscription aux Cours - ADMIN et TEACHER uniquement -->
+    <div class="row mt-4" sec:authorize="hasAnyRole('ADMIN', 'TEACHER')">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-plus-circle"></i> Inscrire à un Cours
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${availableCourses == null || availableCourses.empty}" class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Aucun cours disponible dans la filière de cet élève.
+                    </div>
+                    <div th:unless="${availableCourses == null || availableCourses.empty}">
+                        <p class="text-muted mb-3">
+                            <i class="bi bi-info-circle"></i>
+                            Sélectionnez un cours de la filière <strong th:text="${student.department?.name}">Filière</strong> pour inscrire l'élève.
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Intitulé</th>
+                                    <th>Crédits</th>
+                                    <th>Places</th>
+                                    <th>Statut</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="course : ${availableCourses}">
+                                    <td><code th:text="${course.code}">CODE</code></td>
+                                    <td th:text="${course.name}">Nom du cours</td>
+                                    <td><span class="badge bg-secondary" th:text="${course.credits}">3</span></td>
+                                    <td>
+                                        <span th:text="${course.currentEnrollmentCount} + '/' + ${course.maxStudents}"
+                                              th:classappend="${course.isFull} ? 'text-danger' : 'text-success'">0/30</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${course.isFull}" class="badge bg-danger">Complet</span>
+                                        <span th:unless="${course.isFull}" class="badge bg-success">Disponible</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <!-- Vérifier si l'élève est déjà inscrit -->
+                                        <th:block th:with="isEnrolled=${enrollments != null && #lists.size(enrollments.?[courseId == course.id]) > 0}">
+                                            <span th:if="${isEnrolled}" class="badge bg-secondary">
+                                                <i class="bi bi-check"></i> Déjà inscrit
+                                            </span>
+                                            <!-- Bouton d'inscription si non inscrit et cours non complet -->
+                                            <form th:unless="${isEnrolled || course.isFull}"
+                                                  th:action="@{/web/students/{studentId}/enroll/{courseId}(studentId=${student.id}, courseId=${course.id})}"
+                                                  method="post"
+                                                  style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-success"
+                                                        onclick="return confirm('Confirmer l\'inscription à ce cours ?');">
+                                                    <i class="bi bi-plus-circle"></i> Inscrire
+                                                </button>
+                                            </form>
+                                            <!-- Message si cours complet -->
+                                            <span th:if="${course.isFull && !isEnrolled}" class="text-muted">
+                                                <i class="bi bi-x-circle"></i> Non disponible
+                                            </span>
+                                        </th:block>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
