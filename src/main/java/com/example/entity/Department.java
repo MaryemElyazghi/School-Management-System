@@ -23,12 +23,10 @@ public class Department extends BaseEntity {
     @Column(length = 500)
     private String description;
 
-    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    // ✅ CORRECTION: LAZY au lieu de EAGER pour éviter cartesian product
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Course> courses = new ArrayList<>();
 
-    @OneToMany(mappedBy = "department", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
     private List<Student> students = new ArrayList<>();
-
-//    @OneToMany(mappedBy = "department")
-//    private List<Teacher> teachers = new ArrayList<>();
 }

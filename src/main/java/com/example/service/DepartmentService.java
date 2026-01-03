@@ -16,11 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * ✅ Service de gestion des Filières (VERSION CORRIGÉE)
- *
- * Corrections:
- * - Suppression des setCreatedAt/setUpdatedAt (non présents dans DTO)
- * - Conversion DTO simplifiée
+ * ✅ Service de gestion des Filières (VERSION CORRIGÉE - LAZY LOADING FIX)
  */
 @Service
 @RequiredArgsConstructor
@@ -37,24 +33,24 @@ public class DepartmentService {
     // ========================================================================
 
     /**
-     * ✅ Récupérer toutes les filières
+     * ✅ Récupérer toutes les filières (SANS statistiques pour éviter lazy loading)
      */
     public List<DepartmentDTO> getAllDepartments() {
         return departmentRepository.findAll()
                 .stream()
-                .map(this::convertToDTO)
+                .map(this::convertToDTOSimple) // ✅ Version simple sans accès aux collections
                 .collect(Collectors.toList());
     }
 
     /**
-     * ✅ Récupérer une filière par ID
+     * ✅ Récupérer une filière par ID (AVEC statistiques)
      */
     public DepartmentDTO getDepartmentById(Long id) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Department", "id", id));
 
-        return convertToDTO(department);
+        return convertToDTO(department); // ✅ Version complète avec statistiques
     }
 
     /**
@@ -106,7 +102,7 @@ public class DepartmentService {
         Department saved = departmentRepository.save(department);
 
         // Conversion Entity → DTO
-        return convertToDTO(saved);
+        return convertToDTOSimple(saved);
     }
 
     // ========================================================================
@@ -157,7 +153,7 @@ public class DepartmentService {
         // Sauvegarde
         Department updated = departmentRepository.save(department);
 
-        return convertToDTO(updated);
+        return convertToDTOSimple(updated);
     }
 
     // ========================================================================
@@ -166,11 +162,6 @@ public class DepartmentService {
 
     /**
      * ✅ Supprimer une filière
-     *
-     * PROTECTION: Impossible de supprimer si:
-     * - Des élèves sont inscrits dans cette filière
-     * - Des cours sont rattachés à cette filière
-     * - Des enseignants sont affectés à cette filière
      */
     public void deleteDepartment(Long id) {
         // Vérifier que la filière existe
@@ -230,15 +221,11 @@ public class DepartmentService {
 
     /**
      * ✅ Valider le format du code de filière
-     *
-     * Règle: Alphanumérique uniquement (A-Z, a-z, 0-9)
      */
     private boolean isValidDepartmentCode(String code) {
         if (code == null || code.isEmpty()) {
             return false;
         }
-
-        // Regex: ^[A-Za-z0-9]+$
         return code.matches("^[A-Za-z0-9]+$");
     }
 
@@ -261,13 +248,32 @@ public class DepartmentService {
     }
 
     // ========================================================================
-    // CONVERSIONS DTO ↔ ENTITY (VERSION CORRIGÉE)
+    // CONVERSIONS DTO ↔ ENTITY (VERSION CORRIGÉE ANTI-LAZY-LOADING)
     // ========================================================================
 
     /**
-     * Convertir Entity → DTO
+     * ✅ Convertir Entity → DTO (VERSION SIMPLE - pour listes)
      *
-     * ✅ CORRECTION: Utilise studentCount/courseCount au lieu de createdAt/updatedAt
+     * N'accède PAS aux collections lazy - Met des 0 par défaut
+     */
+    private DepartmentDTO convertToDTOSimple(Department department) {
+        DepartmentDTO dto = new DepartmentDTO();
+        dto.setId(department.getId());
+        dto.setCode(department.getCode());
+        dto.setName(department.getName());
+        dto.setDescription(department.getDescription());
+
+        // ✅ Pas d'accès aux collections - valeurs par défaut
+        dto.setStudentCount(0);
+        dto.setCourseCount(0);
+
+        return dto;
+    }
+
+    /**
+     * ✅ Convertir Entity → DTO (VERSION COMPLÈTE - pour détails)
+     *
+     * Utilise les repositories pour compter au lieu d'accéder aux collections
      */
     private DepartmentDTO convertToDTO(Department department) {
         DepartmentDTO dto = new DepartmentDTO();
@@ -276,18 +282,9 @@ public class DepartmentService {
         dto.setName(department.getName());
         dto.setDescription(department.getDescription());
 
-        // ✅ Ajouter les statistiques si les collections sont chargées
-        if (department.getStudents() != null) {
-            dto.setStudentCount(department.getStudents().size());
-        } else {
-            dto.setStudentCount(0);
-        }
-
-        if (department.getCourses() != null) {
-            dto.setCourseCount(department.getCourses().size());
-        } else {
-            dto.setCourseCount(0);
-        }
+        // ✅ Utiliser les repositories pour éviter lazy loading
+        dto.setStudentCount((int) studentRepository.findByDepartmentId(department.getId()).size());
+        dto.setCourseCount((int) courseRepository.findByDepartmentId(department.getId()).size());
 
         return dto;
     }
