@@ -8,6 +8,7 @@ import com.example.service.DepartmentService;
 import com.example.service.EnrollmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,6 +25,8 @@ public class CourseWebController {
     private final EnrollmentService enrollmentService;
     private final CourseRepository courseRepository;
 
+    // ========== CONSULTATION - Tous authentifiés ==========
+
     @GetMapping
     public String listCourses(Model model) {
         model.addAttribute("courses", courseService.getAllCourses());
@@ -31,6 +34,20 @@ public class CourseWebController {
         return "courses/list";
     }
 
+    @GetMapping("/{id}")
+    public String showCourseDetails(@PathVariable Long id, Model model) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        model.addAttribute("course", course);
+        model.addAttribute("enrollments", enrollmentService.getCourseEnrollments(id));
+        model.addAttribute("pageTitle", "Détails du Cours");
+        return "courses/details";
+    }
+
+    // ========== CRÉATION - ADMIN et TEACHER ==========
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @GetMapping("/new")
     public String showCreateForm(Model model) {
         model.addAttribute("course", new CourseDTO());
@@ -40,7 +57,8 @@ public class CourseWebController {
         return "courses/form";
     }
 
-    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @PostMapping("/new")
     public String createCourse(
             @Valid @ModelAttribute("course") CourseDTO courseDTO,
             BindingResult result,
@@ -67,6 +85,9 @@ public class CourseWebController {
         }
     }
 
+    // ========== MODIFICATION - ADMIN et TEACHER ==========
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable Long id, Model model) {
         CourseDTO course = courseService.getCourseById(id);
@@ -77,7 +98,8 @@ public class CourseWebController {
         return "courses/form";
     }
 
-    @PostMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @PostMapping("/{id}/update")
     public String updateCourse(
             @PathVariable Long id,
             @Valid @ModelAttribute("course") CourseDTO courseDTO,
@@ -105,17 +127,9 @@ public class CourseWebController {
         }
     }
 
-    @GetMapping("/{id}")
-    public String showCourseDetails(@PathVariable Long id, Model model) {
-        Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+    // ========== SUPPRESSION - ADMIN et TEACHER ==========
 
-        model.addAttribute("course", course);
-        model.addAttribute("enrollments", enrollmentService.getCourseEnrollments(id));
-        model.addAttribute("pageTitle", "Détails du Cours");
-        return "courses/details";
-    }
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @PostMapping("/{id}/delete")
     public String deleteCourse(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {

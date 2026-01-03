@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
@@ -14,7 +14,10 @@
             </h2>
         </div>
         <div class="col-md-4 text-end">
-            <a href="/web/departments/new" class="btn btn-success">
+            <!-- Ajouter - ADMIN uniquement -->
+            <a sec:authorize="hasRole('ADMIN')"
+               href="/web/departments/new"
+               class="btn btn-success">
                 <i class="bi bi-plus-circle"></i> Ajouter une Filière
             </a>
         </div>
@@ -74,11 +77,13 @@
                     </div>
 
                     <div class="d-grid gap-2">
+                        <!-- Voir - Tous -->
                         <a th:href="@{/web/departments/{id}(id=${dept.id})}"
                            class="btn btn-sm btn-outline-success">
                             <i class="bi bi-eye"></i> Voir Détails
                         </a>
-                        <div class="btn-group" role="group">
+                        <!-- Modifier/Supprimer - ADMIN uniquement -->
+                        <div sec:authorize="hasRole('ADMIN')" class="btn-group" role="group">
                             <a th:href="@{/web/departments/{id}/edit(id=${dept.id})}"
                                class="btn btn-sm btn-warning">
                                 <i class="bi bi-pencil"></i> Modifier

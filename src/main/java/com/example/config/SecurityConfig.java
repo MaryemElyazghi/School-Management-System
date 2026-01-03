@@ -4,7 +4,6 @@ import com.example.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -12,8 +11,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,37 +33,32 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/h2-console/**", "/api/**")
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // H2 Console - public
-                        .requestMatchers("/h2-console/**").permitAll()
-
-                        // API REST - Authentification JWT
+                        // ========== API REST (JWT) ==========
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
+                        .requestMatchers("/api/teacher/**").hasRole("TEACHER")
 
-                        // Pages WEB - Lecture pour tous, Modification pour authentifiés
-                        .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**").permitAll()
+                        // ========== RESSOURCES PUBLIQUES ==========
+                        .requestMatchers("/", "/login", "/logout", "/error").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
 
-                        // LECTURE (GET) - Public
-                        .requestMatchers(HttpMethod.GET, "/web/students", "/web/students/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/web/departments", "/web/departments/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/web/courses", "/web/courses/*").permitAll()
-
-                        // CRÉATION/MODIFICATION/SUPPRESSION - Authentification requise
-                        .requestMatchers(HttpMethod.POST, "/web/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/web/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/web/**").authenticated()
+                        // ========== PAGES WEB - CONSULTATION (GET) ==========
+                        // Tous les utilisateurs authentifiés peuvent consulter
+                        .requestMatchers("/web/students/**").authenticated()
+                        .requestMatchers("/web/departments/**").authenticated()
+                        .requestMatchers("/web/courses/**").authenticated()
 
                         .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/", true)
                         .failureUrl("/login?error=true")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -75,6 +67,9 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
+                )
+                .exceptionHandling(ex -> ex
+                        .accessDeniedPage("/access-denied")
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

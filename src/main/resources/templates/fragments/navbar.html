@@ -14,6 +14,7 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Menu de gauche - Visible seulement si connecté -->
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
                     <a class="nav-link" href="/">
@@ -21,39 +22,50 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
+                <!-- Menu visible UNIQUEMENT si connecté -->
+                <li class="nav-item" sec:authorize="isAuthenticated()">
                     <a class="nav-link" href="/web/students">
                         <i class="bi bi-people-fill"></i> Élèves
                     </a>
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item" sec:authorize="isAuthenticated()">
                     <a class="nav-link" href="/web/departments">
                         <i class="bi bi-diagram-3-fill"></i> Filières
                     </a>
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item" sec:authorize="isAuthenticated()">
                     <a class="nav-link" href="/web/courses">
                         <i class="bi bi-book-fill"></i> Cours
                     </a>
                 </li>
             </ul>
 
+            <!-- Menu de droite -->
             <ul class="navbar-nav">
+                <!-- H2 Console - Toujours visible -->
                 <li class="nav-item">
                     <a class="nav-link" href="/h2-console" target="_blank">
                         <i class="bi bi-database"></i> H2 Console
                     </a>
                 </li>
 
-                <!-- BOUTON DE DÉCONNEXION VISIBLE -->
-                <li class="nav-item">
-                    <a class="nav-link text-warning" href="/logout"
-                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                        <i class="bi bi-box-arrow-right"></i> Déconnexion
+                <!-- ✅ BOUTON CONNEXION - Visible si NON connecté -->
+                <li class="nav-item" sec:authorize="!isAuthenticated()">
+                    <a class="nav-link text-success" href="/login">
+                        <i class="bi bi-box-arrow-in-right"></i> Connexion
                     </a>
-                    <form id="logout-form" action="/logout" method="POST" style="display: none;">
+                </li>
+
+                <!-- ✅ BOUTON DÉCONNEXION - Visible si connecté -->
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <form th:action="@{/logout}" method="post" class="d-inline">
+                        <button type="submit"
+                                class="nav-link text-warning border-0 bg-transparent"
+                                style="cursor: pointer; padding: 0.5rem 1rem;">
+                            <i class="bi bi-box-arrow-right"></i> Déconnexion
+                        </button>
                     </form>
                 </li>
             </ul>

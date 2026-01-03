@@ -32,7 +32,8 @@
         <div class="col-md-8 mx-auto">
             <div class="card">
                 <div class="card-body">
-                    <form th:action="${isEdit} ? @{/web/students/{id}(id=${student.id})} : @{/web/students}"
+                    <!-- ACTION CORRIGÉE: /new pour création, /{id}/update pour modification -->
+                    <form th:action="${isEdit} ? @{/web/students/{id}/update(id=${student.id})} : @{/web/students/new}"
                           method="post"
                           th:object="${student}">
 

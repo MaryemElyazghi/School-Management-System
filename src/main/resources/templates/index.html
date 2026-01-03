@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head th:replace="~{fragments/head :: head('Accueil')}"></head>
 <body>
 <!-- Navbar -->
@@ -36,15 +36,28 @@
                         Gérez les élèves, leurs filières et leurs inscriptions aux cours
                     </p>
                     <div class="d-grid gap-2">
-                        <a href="/web/students" class="btn btn-primary">
+                        <!-- Voir liste - Tous connectés -->
+                        <a sec:authorize="isAuthenticated()"
+                           href="/web/students"
+                           class="btn btn-primary">
                             <i class="bi bi-list"></i> Liste des Élèves
                         </a>
-                        <a href="/web/students/new" class="btn btn-outline-primary">
+                        <!-- Ajouter - ADMIN et TEACHER -->
+                        <a sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
+                           href="/web/students/new"
+                           class="btn btn-outline-primary">
                             <i class="bi bi-plus-circle"></i> Ajouter un Élève
+                        </a>
+                        <!-- Bouton connexion si non connecté -->
+                        <a sec:authorize="!isAuthenticated()"
+                           href="/login"
+                           class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right"></i> Se connecter
                         </a>
                     </div>
                 </div>
             </div>
+        </div>
         </div>
 
         <!-- Card Filières -->

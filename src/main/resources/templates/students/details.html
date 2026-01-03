@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head th:replace="~{fragments/head :: head('Détails Élève')}"></head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
@@ -17,7 +17,10 @@
             <a href="/web/students" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Retour
             </a>
-            <a th:href="@{/web/students/{id}/edit(id=${student.id})}" class="btn btn-warning">
+            <!-- Modifier - ADMIN et TEACHER uniquement -->
+            <a sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
+               th:href="@{/web/students/{id}/edit(id=${student.id})}"
+               class="btn btn-warning">
                 <i class="bi bi-pencil"></i> Modifier
             </a>
         </div>

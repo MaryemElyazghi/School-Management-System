@@ -8,6 +8,7 @@ import com.example.service.DepartmentService;
 import com.example.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,6 +25,8 @@ public class DepartmentWebController {
     private final CourseService courseService;
     private final DepartmentRepository departmentRepository;
 
+    // ========== CONSULTATION - Tous authentifiés ==========
+
     @GetMapping
     public String listDepartments(Model model) {
         model.addAttribute("departments", departmentService.getAllDepartments());
@@ -31,6 +34,21 @@ public class DepartmentWebController {
         return "departments/list";
     }
 
+    @GetMapping("/{id}")
+    public String showDepartmentDetails(@PathVariable Long id, Model model) {
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+
+        model.addAttribute("department", department);
+        model.addAttribute("students", studentService.getStudentsByDepartment(id));
+        model.addAttribute("courses", courseService.getCoursesByDepartment(id));
+        model.addAttribute("pageTitle", "Détails de la Filière");
+        return "departments/details";
+    }
+
+    // ========== CRÉATION - ADMIN uniquement ==========
+
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/new")
     public String showCreateForm(Model model) {
         model.addAttribute("department", new DepartmentDTO());
@@ -39,7 +57,8 @@ public class DepartmentWebController {
         return "departments/form";
     }
 
-    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/new")
     public String createDepartment(
             @Valid @ModelAttribute("department") DepartmentDTO departmentDTO,
             BindingResult result,
@@ -64,6 +83,9 @@ public class DepartmentWebController {
         }
     }
 
+    // ========== MODIFICATION - ADMIN uniquement ==========
+
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable Long id, Model model) {
         DepartmentDTO department = departmentService.getDepartmentById(id);
@@ -73,7 +95,8 @@ public class DepartmentWebController {
         return "departments/form";
     }
 
-    @PostMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/update")
     public String updateDepartment(
             @PathVariable Long id,
             @Valid @ModelAttribute("department") DepartmentDTO departmentDTO,
@@ -99,18 +122,9 @@ public class DepartmentWebController {
         }
     }
 
-    @GetMapping("/{id}")
-    public String showDepartmentDetails(@PathVariable Long id, Model model) {
-        Department department = departmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Department not found"));
+    // ========== SUPPRESSION - ADMIN uniquement ==========
 
-        model.addAttribute("department", department);
-        model.addAttribute("students", studentService.getStudentsByDepartment(id));
-        model.addAttribute("courses", courseService.getCoursesByDepartment(id));
-        model.addAttribute("pageTitle", "Détails de la Filière");
-        return "departments/details";
-    }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/delete")
     public String deleteDepartment(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
@@ -14,7 +14,10 @@
             </h2>
         </div>
         <div class="col-md-4 text-end">
-            <a href="/web/courses/new" class="btn btn-warning">
+            <!-- Ajouter - ADMIN et TEACHER -->
+            <a sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
+               href="/web/courses/new"
+               class="btn btn-warning">
                 <i class="bi bi-plus-circle"></i> Ajouter un Cours
             </a>
         </div>
@@ -74,15 +77,22 @@
                         </td>
                         <td class="text-center table-actions">
                             <div class="btn-group btn-group-sm" role="group">
+                                <!-- Voir - Tous -->
                                 <a th:href="@{/web/courses/{id}(id=${course.id})}"
                                    class="btn btn-info btn-sm" title="Détails">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a th:href="@{/web/courses/{id}/edit(id=${course.id})}"
+
+                                <!-- Modifier - ADMIN et TEACHER -->
+                                <a sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
+                                   th:href="@{/web/courses/{id}/edit(id=${course.id})}"
                                    class="btn btn-warning btn-sm" title="Modifier">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form th:action="@{/web/courses/{id}/delete(id=${course.id})}"
+
+                                <!-- Supprimer - ADMIN et TEACHER -->
+                                <form sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
+                                      th:action="@{/web/courses/{id}/delete(id=${course.id})}"
                                       method="post" style="display: inline;"
                                       onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce cours ?');">
                                     <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">

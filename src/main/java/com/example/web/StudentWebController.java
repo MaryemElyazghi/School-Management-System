@@ -2,7 +2,6 @@ package com.example.web;
 
 import com.example.dto.StudentDTO;
 import com.example.entity.Student;
-import com.example.repository.DepartmentRepository;
 import com.example.repository.StudentRepository;
 import com.example.service.CourseService;
 import com.example.service.DepartmentService;
@@ -14,7 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
+import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
 
 @Controller
@@ -25,12 +24,10 @@ public class StudentWebController {
     private final StudentService studentService;
     private final DepartmentService departmentService;
     private final EnrollmentService enrollmentService;
-    private final CourseService courseService;
     private final StudentRepository studentRepository;
 
-    /**
-     * Liste de tous les étudiants
-     */
+    // ========== CONSULTATION - Tous les utilisateurs authentifiés ==========
+
     @GetMapping
     public String listStudents(Model model) {
         model.addAttribute("students", studentService.getAllStudents());
@@ -38,9 +35,20 @@ public class StudentWebController {
         return "students/list";
     }
 
-    /**
-     * Afficher le formulaire de création
-     */
+    @GetMapping("/{id}")
+    public String showStudentDetails(@PathVariable Long id, Model model) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        model.addAttribute("student", student);
+        model.addAttribute("enrollments", enrollmentService.getStudentEnrollments(id));
+        model.addAttribute("pageTitle", "Détails de l'Élève");
+        return "students/details";
+    }
+
+    // ========== CRÉATION - ADMIN et TEACHER uniquement ==========
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @GetMapping("/new")
     public String showCreateForm(Model model) {
         model.addAttribute("student", new StudentDTO());
@@ -50,10 +58,8 @@ public class StudentWebController {
         return "students/form";
     }
 
-    /**
-     * Créer un nouvel étudiant
-     */
-    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @PostMapping("/new")
     public String createStudent(
             @Valid @ModelAttribute("student") StudentDTO studentDTO,
             BindingResult result,
@@ -80,9 +86,9 @@ public class StudentWebController {
         }
     }
 
-    /**
-     * Afficher le formulaire de modification
-     */
+    // ========== MODIFICATION - ADMIN et TEACHER uniquement ==========
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable Long id, Model model) {
         StudentDTO student = studentService.getStudentById(id);
@@ -93,10 +99,8 @@ public class StudentWebController {
         return "students/form";
     }
 
-    /**
-     * Mettre à jour un étudiant
-     */
-    @PostMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @PostMapping("/{id}/update")
     public String updateStudent(
             @PathVariable Long id,
             @Valid @ModelAttribute("student") StudentDTO studentDTO,
@@ -124,23 +128,9 @@ public class StudentWebController {
         }
     }
 
-    /**
-     * Détails d'un étudiant (avec filière, cours, dossier administratif)
-     */
-    @GetMapping("/{id}")
-    public String showStudentDetails(@PathVariable Long id, Model model) {
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+    // ========== SUPPRESSION - ADMIN uniquement ==========
 
-        model.addAttribute("student", student);
-        model.addAttribute("enrollments", enrollmentService.getStudentEnrollments(id));
-        model.addAttribute("pageTitle", "Détails de l'Élève");
-        return "students/details";
-    }
-
-    /**
-     * Supprimer un étudiant
-     */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/delete")
     public String deleteStudent(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -152,9 +142,9 @@ public class StudentWebController {
         return "redirect:/web/students";
     }
 
-    /**
-     * Inscrire un étudiant à un cours
-     */
+    // ========== INSCRIPTION AUX COURS - ADMIN et TEACHER ==========
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @PostMapping("/{studentId}/enroll/{courseId}")
     public String enrollInCourse(
             @PathVariable Long studentId,
