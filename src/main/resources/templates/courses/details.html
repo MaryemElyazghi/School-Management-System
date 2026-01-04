@@ -143,7 +143,7 @@
                             </tr>
                             <tr th:each="enrollment : ${enrollments}">
                                 <td>
-                                    <strong th:text="${enrollment.studentNumber*}"></strong>
+                                    <strong th:text="${enrollment.studentNumber}"></strong>
                                 </td>
                                 <td th:text="${enrollment.studentName}"></td>
                                 <td th:text="${#temporals.format(enrollment.enrollmentDate, 'dd/MM/yyyy')}"></td>

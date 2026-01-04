@@ -65,13 +65,14 @@
                         <div>
                             <small class="text-muted">
                                 <i class="bi bi-people"></i>
-                                <span th:text="${dept.students?.size() ?: 0}"></span> élèves
+                                <!--/*@thymesVar id="studentCount" type=""*/-->
+                                <span th:text="${dept.studentCount}"></span> élèves
                             </small>
                         </div>
                         <div>
                             <small class="text-muted">
                                 <i class="bi bi-book"></i>
-                                <span th:text="${dept.courses?.size() ?: 0}"></span> cours
+                                <span th:text="${dept.courseCount}"></span> cours
                             </small>
                         </div>
                     </div>

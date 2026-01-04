@@ -79,25 +79,19 @@ public class DepartmentWebController {
      */
     @GetMapping("/{id}")
     public String showDepartmentDetails(@PathVariable Long id, Model model) {
-        // Récupérer la filière
-        Department department = departmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Filière non trouvée"));
+        // ✅ Utiliser le service qui retourne un DTO
+        DepartmentDTO department = departmentService.getDepartmentById(id);
 
-        // ✅ Récupérer la liste des élèves de cette filière
         List<StudentDTO> students = studentService.getStudentsByDepartment(id);
-
-        // ✅ Récupérer la liste des cours de cette filière
         List<CourseDTO> courses = courseService.getCoursesByDepartment(id);
 
-        // Ajouter au modèle
-        model.addAttribute("department", department);
-        model.addAttribute("students", students);  // ✅ LISTE ÉLÈVES
-        model.addAttribute("courses", courses);    // ✅ LISTE COURS
+        model.addAttribute("department", department);  // ✅ DTO au lieu d'entité
+        model.addAttribute("students", students);
+        model.addAttribute("courses", courses);
         model.addAttribute("pageTitle", "Détails de la Filière: " + department.getName());
 
         return "departments/details";
     }
-
     // ========================================================================
     // CRÉATION - ADMIN uniquement
     // ========================================================================
