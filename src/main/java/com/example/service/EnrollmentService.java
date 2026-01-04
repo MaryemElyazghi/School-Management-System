@@ -80,11 +80,11 @@ public class EnrollmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment", "id", enrollmentId));
 
         // Validation: ne peut abandonner qu'un cours actif
-        if (enrollment.getStatus() != Enrollment.EnrollmentStatus.ACTIVE) {
-            throw new BusinessException(
-                    String.format("Cannot drop course. Current status is %s. Only ACTIVE courses can be dropped.",
-                            enrollment.getStatus()));
-        }
+//        if (enrollment.getStatus() != Enrollment.EnrollmentStatus.ACTIVE) {
+//            throw new BusinessException(
+//                    String.format("Cannot drop course. Current status is %s. Only ACTIVE courses can be dropped.",
+//                            enrollment.getStatus()));
+//        }
 
         enrollment.setStatus(Enrollment.EnrollmentStatus.DROPPED);
         Enrollment updated = enrollmentRepository.save(enrollment);

@@ -187,9 +187,8 @@
                                        class="btn btn-sm btn-info" title="Voir le cours">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <!-- Se désinscrire - uniquement si ACTIVE et pour ADMIN/TEACHER -->
+                                    <!-- Se désinscrire -  pour ADMIN/TEACHER -->
                                     <form sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
-                                          th:if="${enrollment.status.name() == 'ACTIVE'}"
                                           th:action="@{/web/students/{studentId}/drop/{enrollmentId}(studentId=${student.id}, enrollmentId=${enrollment.id})}"
                                           method="post"
                                           style="display: inline;">
