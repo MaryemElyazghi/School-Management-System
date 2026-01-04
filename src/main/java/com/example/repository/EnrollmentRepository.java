@@ -24,4 +24,10 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     );
 
     long countByCourseId(Long courseId);
+
+    // ✅ Compter les inscriptions actives d'un élève
+    long countByStudentIdAndStatus(Long studentId, Enrollment.EnrollmentStatus status);
+
+    // ✅ Supprimer toutes les inscriptions d'un élève
+    void deleteByStudentId(Long studentId);
 }

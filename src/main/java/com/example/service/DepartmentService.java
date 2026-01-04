@@ -33,13 +33,32 @@ public class DepartmentService {
     // ========================================================================
 
     /**
-     * ✅ Récupérer toutes les filières (SANS statistiques pour éviter lazy loading)
+     * ✅ Récupérer toutes les filières AVEC statistiques
+     * Utilise les repositories pour éviter le lazy loading
      */
     public List<DepartmentDTO> getAllDepartments() {
         return departmentRepository.findAll()
                 .stream()
-                .map(this::convertToDTOSimple) // ✅ Version simple sans accès aux collections
+                .map(this::convertToDTOWithStats) // ✅ Version avec statistiques
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Convertir Entity → DTO avec statistiques (pour listes)
+     * Utilise les repositories pour compter sans lazy loading
+     */
+    private DepartmentDTO convertToDTOWithStats(Department department) {
+        DepartmentDTO dto = new DepartmentDTO();
+        dto.setId(department.getId());
+        dto.setCode(department.getCode());
+        dto.setName(department.getName());
+        dto.setDescription(department.getDescription());
+
+        // ✅ Utiliser les repositories pour compter (pas de lazy loading)
+        dto.setStudentCount((int) studentRepository.findByDepartmentId(department.getId()).size());
+        dto.setCourseCount((int) courseRepository.findByDepartmentId(department.getId()).size());
+
+        return dto;
     }
 
     /**

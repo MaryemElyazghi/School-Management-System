@@ -8,6 +8,7 @@ import com.example.exception.BusinessException;
 import com.example.exception.ResourceNotFoundException;
 import com.example.repository.DepartmentRepository;
 import com.example.repository.DossierAdministratifRepository;
+import com.example.repository.EnrollmentRepository;
 import com.example.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final DepartmentRepository departmentRepository;
     private final DossierAdministratifRepository dossierRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     public List<StudentDTO> getAllStudents() {
         return studentRepository.findAll()
@@ -46,7 +48,46 @@ public class StudentService {
     }
 
     public StudentDTO createStudent(StudentDTO studentDTO) {
-        // Vérifications...
+        // ✅ VALIDATION 1: Email obligatoire et unique
+        if (studentDTO.getEmail() == null || studentDTO.getEmail().isEmpty()) {
+            throw new BusinessException("L'email est obligatoire");
+        }
+        if (studentRepository.findByEmail(studentDTO.getEmail()).isPresent()) {
+            throw new BusinessException("L'email '" + studentDTO.getEmail() + "' est déjà utilisé par un autre élève");
+        }
+
+        // ✅ VALIDATION 2: Numéro étudiant unique
+        if (studentDTO.getStudentNumber() == null || studentDTO.getStudentNumber().isEmpty()) {
+            throw new BusinessException("Le numéro étudiant est obligatoire");
+        }
+        if (studentRepository.findByStudentNumber(studentDTO.getStudentNumber()).isPresent()) {
+            throw new BusinessException("Le numéro étudiant '" + studentDTO.getStudentNumber() + "' existe déjà");
+        }
+
+        // ✅ VALIDATION 3: Nom et prénom obligatoires
+        if (studentDTO.getFirstName() == null || studentDTO.getFirstName().trim().isEmpty()) {
+            throw new BusinessException("Le prénom est obligatoire");
+        }
+        if (studentDTO.getLastName() == null || studentDTO.getLastName().trim().isEmpty()) {
+            throw new BusinessException("Le nom est obligatoire");
+        }
+
+        // ✅ VALIDATION 4: Filière obligatoire
+        if (studentDTO.getDepartmentId() == null) {
+            throw new BusinessException("La filière est obligatoire pour créer un élève");
+        }
+
+        // ✅ VALIDATION 5: Format du numéro de téléphone (si fourni)
+        if (studentDTO.getPhone() != null && !studentDTO.getPhone().isEmpty()) {
+            if (!isValidPhoneNumber(studentDTO.getPhone())) {
+                throw new BusinessException("Format du numéro de téléphone invalide: " + studentDTO.getPhone());
+            }
+        }
+
+        // ✅ VALIDATION 6: Date d'inscription par défaut à aujourd'hui si non fournie
+        if (studentDTO.getEnrollmentDate() == null) {
+            studentDTO.setEnrollmentDate(LocalDate.now());
+        }
 
         Student student = convertToEntity(studentDTO);
 
@@ -119,9 +160,21 @@ public class StudentService {
         return phone.matches(phoneRegex) && phone.replaceAll("[^0-9]", "").length() >= 8;
     }
 
+    /**
+     * ✅ Supprimer un élève
+     * La suppression inclut:
+     * - Suppression de toutes les inscriptions aux cours
+     * - Suppression du dossier administratif (via cascade)
+     * - Suppression de l'élève
+     */
     public void deleteStudent(Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", "id", id));
+
+        // ✅ Supprimer toutes les inscriptions de l'élève en premier
+        enrollmentRepository.deleteByStudentId(id);
+
+        // ✅ Le dossier administratif sera supprimé automatiquement (CascadeType.ALL + orphanRemoval)
         studentRepository.delete(student);
     }
 

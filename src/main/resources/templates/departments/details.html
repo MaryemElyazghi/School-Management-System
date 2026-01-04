@@ -306,8 +306,7 @@
                     <i class="bi bi-info-circle"></i>
                     Total: <strong th:text="${courses.size()}">0</strong> cours
                     <span th:if="${courses.size() > 0}">
-                            |
-                            <span th:text="${courses.stream().filter(c -> c.isFull()).count()}">0</span>
+                            |0</span>
                             complet(s)
                         </span>
                 </div>

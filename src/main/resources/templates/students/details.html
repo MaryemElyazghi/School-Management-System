@@ -241,39 +241,28 @@
                                 </tr>
                                 </thead>
                                 <tbody>
+                                <!-- ✅ Les cours affichés sont PRÉ-FILTRÉS: non inscrits et non complets -->
                                 <tr th:each="course : ${availableCourses}">
                                     <td><code th:text="${course.code}">CODE</code></td>
                                     <td th:text="${course.name}">Nom du cours</td>
                                     <td><span class="badge bg-secondary" th:text="${course.credits}">3</span></td>
                                     <td>
                                         <span th:text="${course.currentEnrollmentCount} + '/' + ${course.maxStudents}"
-                                              th:classappend="${course.isFull} ? 'text-danger' : 'text-success'">0/30</span>
+                                              class="text-success">0/30</span>
                                     </td>
                                     <td>
-                                        <span th:if="${course.isFull}" class="badge bg-danger">Complet</span>
-                                        <span th:unless="${course.isFull}" class="badge bg-success">Disponible</span>
+                                        <span class="badge bg-success">Disponible</span>
                                     </td>
                                     <td class="text-center">
-                                        <!-- Vérifier si l'élève est déjà inscrit -->
-                                        <th:block th:with="isEnrolled=${enrollments != null && #lists.size(enrollments.?[courseId == course.id]) > 0}">
-                                            <span th:if="${isEnrolled}" class="badge bg-secondary">
-                                                <i class="bi bi-check"></i> Déjà inscrit
-                                            </span>
-                                            <!-- Bouton d'inscription si non inscrit et cours non complet -->
-                                            <form th:unless="${isEnrolled || course.isFull}"
-                                                  th:action="@{/web/students/{studentId}/enroll/{courseId}(studentId=${student.id}, courseId=${course.id})}"
-                                                  method="post"
-                                                  style="display: inline;">
-                                                <button type="submit" class="btn btn-sm btn-success"
-                                                        onclick="return confirm('Confirmer l\'inscription à ce cours ?');">
-                                                    <i class="bi bi-plus-circle"></i> Inscrire
-                                                </button>
-                                            </form>
-                                            <!-- Message si cours complet -->
-                                            <span th:if="${course.isFull && !isEnrolled}" class="text-muted">
-                                                <i class="bi bi-x-circle"></i> Non disponible
-                                            </span>
-                                        </th:block>
+                                        <!-- ✅ Bouton d'inscription direct (cours pré-filtrés) -->
+                                        <form th:action="@{/web/students/{studentId}/enroll/{courseId}(studentId=${student.id}, courseId=${course.id})}"
+                                              method="post"
+                                              style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-success"
+                                                    onclick="return confirm('Confirmer l\'inscription à ce cours ?');">
+                                                <i class="bi bi-plus-circle"></i> Inscrire
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 </tbody>

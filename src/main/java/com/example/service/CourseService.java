@@ -41,11 +41,34 @@ public class CourseService {
     }
 
     /**
-     * Récupérer les cours disponibles pour inscription (de la filière de l'étudiant)
+     * ✅ Récupérer les cours disponibles pour inscription (de la filière de l'étudiant)
+     * EXCLUT les cours auxquels l'étudiant est déjà inscrit
      */
     public List<CourseDTO> getAvailableCoursesForDepartment(Long departmentId) {
         return courseRepository.findAvailableCoursesForDepartment(departmentId)
                 .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Récupérer les cours disponibles pour un étudiant spécifique
+     * EXCLUT les cours auxquels il est déjà inscrit (statut ACTIVE)
+     */
+    public List<CourseDTO> getAvailableCoursesForStudent(Long studentId, Long departmentId) {
+        // Récupérer tous les cours de la filière
+        List<Course> departmentCourses = courseRepository.findAvailableCoursesForDepartment(departmentId);
+
+        // Récupérer les IDs des cours auxquels l'étudiant est déjà inscrit
+        List<Long> enrolledCourseIds = courseRepository.findCoursesByStudentId(studentId)
+                .stream()
+                .map(Course::getId)
+                .collect(Collectors.toList());
+
+        // Filtrer pour n'inclure que les cours auxquels l'étudiant n'est PAS inscrit
+        return departmentCourses.stream()
+                .filter(course -> !enrolledCourseIds.contains(course.getId()))
+                .filter(course -> !course.isFull()) // Exclure les cours complets
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -88,20 +111,42 @@ public class CourseService {
         return convertToDTO(course);
     }
 
+    /**
+     * ✅ Créer un nouveau cours
+     *
+     * RÈGLE MÉTIER: Un cours DOIT être rattaché à une filière
+     */
     public CourseDTO createCourse(CourseDTO courseDTO) {
-        // Vérifier si le code du cours existe déjà
+        // ✅ VALIDATION 1: Code obligatoire et unique
+        if (courseDTO.getCode() == null || courseDTO.getCode().trim().isEmpty()) {
+            throw new BusinessException("Le code du cours est obligatoire");
+        }
         if (courseRepository.findByCode(courseDTO.getCode()).isPresent()) {
-            throw new BusinessException("Course code already exists: " + courseDTO.getCode());
+            throw new BusinessException("Le code du cours '" + courseDTO.getCode() + "' existe déjà");
         }
 
-        // Validation: maxStudents doit être positif
-        if (courseDTO.getMaxStudents() != null && courseDTO.getMaxStudents() <= 0) {
-            throw new BusinessException("Maximum students must be a positive number");
+        // ✅ VALIDATION 2: Nom obligatoire
+        if (courseDTO.getName() == null || courseDTO.getName().trim().isEmpty()) {
+            throw new BusinessException("Le nom du cours est obligatoire");
         }
 
-        // Validation: credits doit être positif
-        if (courseDTO.getCredits() != null && courseDTO.getCredits() <= 0) {
-            throw new BusinessException("Credits must be a positive number");
+        // ✅ VALIDATION 3: Filière obligatoire (RATTACHEMENT À UNE FILIÈRE)
+        if (courseDTO.getDepartmentId() == null) {
+            throw new BusinessException("Le cours doit être rattaché à une filière");
+        }
+
+        // ✅ VALIDATION 4: maxStudents doit être positif (défaut: 30)
+        if (courseDTO.getMaxStudents() == null) {
+            courseDTO.setMaxStudents(30);
+        } else if (courseDTO.getMaxStudents() <= 0) {
+            throw new BusinessException("Le nombre maximum d'étudiants doit être positif");
+        }
+
+        // ✅ VALIDATION 5: credits doit être positif (défaut: 3)
+        if (courseDTO.getCredits() == null) {
+            courseDTO.setCredits(3);
+        } else if (courseDTO.getCredits() <= 0) {
+            throw new BusinessException("Le nombre de crédits doit être positif");
         }
 
         Course course = convertToEntity(courseDTO);

@@ -44,12 +44,12 @@ public class StudentWebController {
         model.addAttribute("student", student);
         model.addAttribute("enrollments", enrollmentService.getStudentEnrollments(id));
 
-        // Ajouter les cours disponibles de la filière de l'étudiant pour inscription
+        // ✅ Ajouter les cours disponibles pour inscription
+        // Utilise getAvailableCoursesForStudent qui EXCLUT les cours déjà suivis et les cours complets
         if (student.getDepartment() != null) {
             model.addAttribute("availableCourses",
-                    courseService.getCoursesByDepartment(student.getDepartment().getId()));
+                    courseService.getAvailableCoursesForStudent(id, student.getDepartment().getId()));
         }
-
 
         model.addAttribute("pageTitle", "Détails de l'Élève");
         return "students/details";
