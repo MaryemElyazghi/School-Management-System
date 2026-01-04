@@ -259,8 +259,10 @@ public class CourseService {
             dto.setTeacherName(course.getTeacher().getFullName());
         }
 
-        dto.setCurrentEnrollmentCount(course.getCurrentEnrollmentCount());
-        dto.setIsFull(course.isFull());
+        // Use direct database count instead of lazy-loaded collection
+        int enrollmentCount = (int) enrollmentRepository.countByCourseId(course.getId());
+        dto.setCurrentEnrollmentCount(enrollmentCount);
+        dto.setIsFull(course.getMaxStudents() != null && enrollmentCount >= course.getMaxStudents());
 
         return dto;
     }

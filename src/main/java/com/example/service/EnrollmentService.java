@@ -117,9 +117,10 @@ public class EnrollmentService {
 
     /**
      * Obtenir tous les étudiants inscrits à un cours
+     * Utilise JOIN FETCH pour charger les données des étudiants
      */
     public List<EnrollmentDTO> getCourseEnrollments(Long courseId) {
-        return enrollmentRepository.findByCourseId(courseId)
+        return enrollmentRepository.findByCourseIdWithStudent(courseId)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
