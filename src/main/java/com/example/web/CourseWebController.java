@@ -1,8 +1,6 @@
 package com.example.web;
 
 import com.example.dto.CourseDTO;
-import com.example.entity.Course;
-import com.example.repository.CourseRepository;
 import com.example.service.CourseService;
 import com.example.service.DepartmentService;
 import com.example.service.EnrollmentService;
@@ -23,7 +21,6 @@ public class CourseWebController {
     private final CourseService courseService;
     private final DepartmentService departmentService;
     private final EnrollmentService enrollmentService;
-    private final CourseRepository courseRepository;
 
     // ========== CONSULTATION - Tous authentifiés ==========
 
@@ -36,10 +33,7 @@ public class CourseWebController {
 
     @GetMapping("/{id}")
     public String showCourseDetails(@PathVariable Long id, Model model) {
-        Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
-
-        model.addAttribute("course", course);
+        model.addAttribute("course", courseService.getCourseById(id));
         model.addAttribute("enrollments", enrollmentService.getCourseEnrollments(id));
         model.addAttribute("pageTitle", "Détails du Cours");
         return "courses/details";
@@ -139,5 +133,46 @@ public class CourseWebController {
             redirectAttributes.addFlashAttribute("error", "Erreur: " + e.getMessage());
         }
         return "redirect:/web/courses";
+    }
+
+    // ========== GESTION DES INSCRIPTIONS - ADMIN et TEACHER ==========
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @PostMapping("/{courseId}/enrollments/{enrollmentId}/grade")
+    public String assignGrade(
+            @PathVariable Long courseId,
+            @PathVariable Long enrollmentId,
+            @RequestParam Double grade,
+            RedirectAttributes redirectAttributes) {
+        try {
+            // Try to assign grade first, if it fails (grade already exists), try to update
+            try {
+                enrollmentService.assignGrade(enrollmentId, grade);
+            } catch (Exception e) {
+                // If grade already exists, update it instead
+                enrollmentService.updateGrade(enrollmentId, grade, "Mise à jour de la note");
+            }
+            redirectAttributes.addFlashAttribute("success", "Note attribuée avec succès!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Erreur: " + e.getMessage());
+        }
+        return "redirect:/web/courses/" + courseId;
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @PostMapping("/{courseId}/enrollments/{enrollmentId}/status")
+    public String updateEnrollmentStatus(
+            @PathVariable Long courseId,
+            @PathVariable Long enrollmentId,
+            @RequestParam String status,
+            RedirectAttributes redirectAttributes) {
+        try {
+            enrollmentService.updateEnrollmentStatus(enrollmentId,
+                    com.example.entity.Enrollment.EnrollmentStatus.valueOf(status));
+            redirectAttributes.addFlashAttribute("success", "Statut mis à jour avec succès!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Erreur: " + e.getMessage());
+        }
+        return "redirect:/web/courses/" + courseId;
     }
 }
