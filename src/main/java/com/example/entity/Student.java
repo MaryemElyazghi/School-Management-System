@@ -16,8 +16,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class Student extends BaseEntity {
 
-    @Column(unique = true, nullable = false)
-    private String studentNumber;
 
     private String firstName;
     private String lastName;

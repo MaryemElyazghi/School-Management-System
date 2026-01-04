@@ -6,12 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.time.LocalDateTime;
+
 /**
- * ✅ DTO pour Department
+ * ✅ DTO pour Department - VERSION CORRIGÉE
  *
  * Champs:
  * - id, code, name, description (obligatoires)
- * - studentCount, courseCount (optionnels, pour affichage)
+ * - studentCount, courseCount (statistiques)
+ * - createdAt, updatedAt (audit)
  */
 @Data
 @NoArgsConstructor
@@ -34,4 +37,8 @@ public class DepartmentDTO {
     // Champs optionnels pour statistiques (affichage uniquement)
     private Integer studentCount;
     private Integer courseCount;
+
+    // ✅ AJOUT : Champs d'audit pour l'affichage
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

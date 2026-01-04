@@ -15,9 +15,6 @@ import java.time.LocalDate;
 public class StudentDTO {
     private Long id;
 
-    @NotBlank(message = "Student number is required")
-    private String studentNumber;
-
     @NotBlank(message = "First name is required")
     private String firstName;
 
@@ -36,8 +33,10 @@ public class StudentDTO {
     private Long departmentId;
 
     private String departmentName;
+    private String departmentCode;
     private String fullName;
 
     // Numéro d'inscription du dossier administratif
     private String numeroInscription;
+    private LocalDate dossierDateCreation;
 }

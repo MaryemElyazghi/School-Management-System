@@ -56,14 +56,6 @@ public class StudentService {
             throw new BusinessException("L'email '" + studentDTO.getEmail() + "' est déjà utilisé par un autre élève");
         }
 
-        // ✅ VALIDATION 2: Numéro étudiant unique
-        if (studentDTO.getStudentNumber() == null || studentDTO.getStudentNumber().isEmpty()) {
-            throw new BusinessException("Le numéro étudiant est obligatoire");
-        }
-        if (studentRepository.findByStudentNumber(studentDTO.getStudentNumber()).isPresent()) {
-            throw new BusinessException("Le numéro étudiant '" + studentDTO.getStudentNumber() + "' existe déjà");
-        }
-
         // ✅ VALIDATION 3: Nom et prénom obligatoires
         if (studentDTO.getFirstName() == null || studentDTO.getFirstName().trim().isEmpty()) {
             throw new BusinessException("Le prénom est obligatoire");
@@ -192,11 +184,20 @@ public class StudentService {
                 .collect(Collectors.toList());
     }
 
-    // Conversion methods
+// ========================================================================
+// CONVERSION DTO ↔ ENTITY (VERSION CORRIGÉE)
+// ========================================================================
+
+    /**
+     * ✅ Convertir Entity → DTO - VERSION CORRIGÉE
+     *
+     * AJOUTS :
+     * - departmentCode pour l'affichage
+     * - dossierDateCreation pour le dossier administratif complet
+     */
     private StudentDTO convertToDTO(Student student) {
         StudentDTO dto = new StudentDTO();
         dto.setId(student.getId());
-        dto.setStudentNumber(student.getStudentNumber());
         dto.setFirstName(student.getFirstName());
         dto.setLastName(student.getLastName());
         dto.setEmail(student.getEmail());
@@ -204,25 +205,29 @@ public class StudentService {
         dto.setDateOfBirth(student.getDateOfBirth());
         dto.setEnrollmentDate(student.getEnrollmentDate());
 
+        // ✅ Département complet
         if (student.getDepartment() != null) {
             dto.setDepartmentId(student.getDepartment().getId());
             dto.setDepartmentName(student.getDepartment().getName());
+            dto.setDepartmentCode(student.getDepartment().getCode());  // ✅ AJOUT
         }
 
         dto.setFullName(student.getFullName());
 
-        // Ajouter le numéro d'inscription si le dossier existe
+        // ✅ Dossier administratif complet
         if (student.getDossierAdministratif() != null) {
             dto.setNumeroInscription(student.getDossierAdministratif().getNumeroInscription());
+            dto.setDossierDateCreation(student.getDossierAdministratif().getDateCreation());  // ✅ AJOUT
         }
 
         return dto;
     }
 
-
+    /**
+     * Convertir DTO → Entity
+     */
     private Student convertToEntity(StudentDTO dto) {
         Student student = new Student();
-        student.setStudentNumber(dto.getStudentNumber());
         student.setFirstName(dto.getFirstName());
         student.setLastName(dto.getLastName());
         student.setEmail(dto.getEmail());

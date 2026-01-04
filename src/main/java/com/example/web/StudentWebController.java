@@ -1,8 +1,6 @@
 package com.example.web;
 
 import com.example.dto.StudentDTO;
-import com.example.entity.Student;
-import com.example.repository.StudentRepository;
 import com.example.service.CourseService;
 import com.example.service.DepartmentService;
 import com.example.service.EnrollmentService;
@@ -16,6 +14,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
 
+/**
+ * ✅ Controller Web pour la gestion des Élèves - VERSION CORRIGÉE
+ */
 @Controller
 @RequestMapping("/web/students")
 @RequiredArgsConstructor
@@ -25,7 +26,6 @@ public class StudentWebController {
     private final DepartmentService departmentService;
     private final EnrollmentService enrollmentService;
     private final CourseService courseService;
-    private final StudentRepository studentRepository;
 
     // ========== CONSULTATION - Tous les utilisateurs authentifiés ==========
 
@@ -36,19 +36,23 @@ public class StudentWebController {
         return "students/list";
     }
 
+    /**
+     * ✅ Afficher les détails d'un élève - VERSION CORRIGÉE
+     *
+     * CORRECTION : Utilise le service au lieu du repository
+     */
     @GetMapping("/{id}")
     public String showStudentDetails(@PathVariable Long id, Model model) {
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+        // ✅ CORRECTION : Utilise le service qui retourne un DTO
+        StudentDTO student = studentService.getStudentById(id);
 
-        model.addAttribute("student", student);
+        model.addAttribute("student", student);  // ✅ DTO au lieu d'entité
         model.addAttribute("enrollments", enrollmentService.getStudentEnrollments(id));
 
         // ✅ Ajouter les cours disponibles pour inscription
-        // Utilise getAvailableCoursesForStudent qui EXCLUT les cours déjà suivis et les cours complets
-        if (student.getDepartment() != null) {
+        if (student.getDepartmentId() != null) {
             model.addAttribute("availableCourses",
-                    courseService.getAvailableCoursesForStudent(id, student.getDepartment().getId()));
+                    courseService.getAvailableCoursesForStudent(id, student.getDepartmentId()));
         }
 
         model.addAttribute("pageTitle", "Détails de l'Élève");

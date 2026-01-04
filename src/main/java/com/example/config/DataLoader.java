@@ -2,6 +2,7 @@ package com.example.config;
 
 import com.example.entity.*;
 import com.example.repository.*;
+import jakarta.persistence.Id;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -62,8 +63,7 @@ public class DataLoader implements CommandLineRunner {
         // ========== STUDENTS ==========
 
         // Étudiants GINF
-        Student student1 = createStudent(
-                "STU001", "Ahmed", "Bennani", "ahmed.bennani@student.com",
+        Student student1 = createStudent(1,"Ahmed", "Bennani", "ahmed.bennani@student.com",
                 "0612345678", LocalDate.of(2000, 5, 15), ginf
         );
         User user1 = createUser("ahmed.bennani", "ahmed.bennani@student.com", "password", Role.STUDENT);
@@ -71,7 +71,7 @@ public class DataLoader implements CommandLineRunner {
         studentRepository.save(student1);
 
         Student student2 = createStudent(
-                "STU002", "Fatima", "El Amrani", "fatima.elamrani@student.com",
+                2, "Fatima", "El Amrani", "fatima.elamrani@student.com",
                 "0612345679", LocalDate.of(2001, 8, 22), ginf
         );
         User user2 = createUser("fatima.elamrani", "fatima.elamrani@student.com", "password", Role.STUDENT);
@@ -80,7 +80,7 @@ public class DataLoader implements CommandLineRunner {
 
         // Étudiants GSTR
         Student student3 = createStudent(
-                "STU003", "Omar", "Tahiri", "omar.tahiri@student.com",
+                 3,"Omar", "Tahiri", "omar.tahiri@student.com",
                 "0612345680", LocalDate.of(2000, 11, 10), gstr
         );
         User user3 = createUser("omar.tahiri", "omar.tahiri@student.com", "password", Role.STUDENT);
@@ -88,7 +88,7 @@ public class DataLoader implements CommandLineRunner {
         studentRepository.save(student3);
 
         Student student4 = createStudent(
-                "STU004", "Salma", "Benali", "salma.benali@student.com",
+                4, "Salma", "Benali", "salma.benali@student.com",
                 "0612345681", LocalDate.of(2001, 3, 5), gstr
         );
         User user4 = createUser("salma.benali", "salma.benali@student.com", "password", Role.STUDENT);
@@ -97,7 +97,7 @@ public class DataLoader implements CommandLineRunner {
 
         // Étudiants GIL
         Student student5 = createStudent(
-                "STU005", "Youssef", "Alami", "youssef.alami@student.com",
+                5, "Youssef", "Alami", "youssef.alami@student.com",
                 "0612345682", LocalDate.of(2000, 7, 18), gil
         );
         User user5 = createUser("youssef.alami", "youssef.alami@student.com", "password", Role.STUDENT);
@@ -226,10 +226,10 @@ public class DataLoader implements CommandLineRunner {
         return userRepository.save(user);
     }
 
-    private Student createStudent(String studentNumber, String firstName, String lastName,
+    private Student createStudent(long id, String firstName, String lastName,
                                   String email, String phone, LocalDate dob, Department dept) {
         Student student = new Student();
-        student.setStudentNumber(studentNumber);
+        student.setId(id);
         student.setFirstName(firstName);
         student.setLastName(lastName);
         student.setEmail(email);

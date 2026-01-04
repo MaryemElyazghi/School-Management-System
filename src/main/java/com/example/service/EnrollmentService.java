@@ -234,7 +234,6 @@ public class EnrollmentService {
         if (enrollment.getStudent() != null) {
             dto.setStudentId(enrollment.getStudent().getId());
             dto.setStudentName(enrollment.getStudent().getFullName());
-            dto.setStudentNumber(enrollment.getStudent().getStudentNumber());
         }
 
         if (enrollment.getCourse() != null) {

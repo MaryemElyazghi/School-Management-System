@@ -43,25 +43,7 @@ public class DepartmentService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * ✅ Convertir Entity → DTO avec statistiques (pour listes)
-     * Utilise les repositories pour compter sans lazy loading
-     */
-    private DepartmentDTO convertToDTOWithStats(Department department) {
-        DepartmentDTO dto = new DepartmentDTO();
-        dto.setId(department.getId());
-        dto.setCode(department.getCode());
-        dto.setName(department.getName());
-        dto.setDescription(department.getDescription());
-
-        // ✅ Utiliser les repositories pour compter (pas de lazy loading)
-        dto.setStudentCount((int) studentRepository.findByDepartmentId(department.getId()).size());
-        dto.setCourseCount((int) courseRepository.findByDepartmentId(department.getId()).size());
-
-        return dto;
-    }
-
-    /**
+     /**
      * ✅ Récupérer une filière par ID (AVEC statistiques)
      */
     public DepartmentDTO getDepartmentById(Long id) {
@@ -275,24 +257,15 @@ public class DepartmentService {
      *
      * N'accède PAS aux collections lazy - Met des 0 par défaut
      */
-    private DepartmentDTO convertToDTOSimple(Department department) {
-        DepartmentDTO dto = new DepartmentDTO();
-        dto.setId(department.getId());
-        dto.setCode(department.getCode());
-        dto.setName(department.getName());
-        dto.setDescription(department.getDescription());
-
-        // ✅ Pas d'accès aux collections - valeurs par défaut
-        dto.setStudentCount(0);
-        dto.setCourseCount(0);
-
-        return dto;
-    }
+// ========================================================================
+// CONVERSIONS DTO ↔ ENTITY (VERSION CORRIGÉE)
+// ========================================================================
 
     /**
      * ✅ Convertir Entity → DTO (VERSION COMPLÈTE - pour détails)
      *
      * Utilise les repositories pour compter au lieu d'accéder aux collections
+     * AJOUT : Remplit createdAt et updatedAt
      */
     private DepartmentDTO convertToDTO(Department department) {
         DepartmentDTO dto = new DepartmentDTO();
@@ -304,6 +277,57 @@ public class DepartmentService {
         // ✅ Utiliser les repositories pour éviter lazy loading
         dto.setStudentCount((int) studentRepository.findByDepartmentId(department.getId()).size());
         dto.setCourseCount((int) courseRepository.findByDepartmentId(department.getId()).size());
+
+        // ✅ AJOUT : Champs d'audit
+        dto.setCreatedAt(department.getCreatedAt());
+        dto.setUpdatedAt(department.getUpdatedAt());
+
+        return dto;
+    }
+
+    /**
+     * ✅ Convertir Entity → DTO (VERSION AVEC STATS - pour listes)
+     *
+     * AJOUT : Remplit createdAt et updatedAt
+     */
+    private DepartmentDTO convertToDTOWithStats(Department department) {
+        DepartmentDTO dto = new DepartmentDTO();
+        dto.setId(department.getId());
+        dto.setCode(department.getCode());
+        dto.setName(department.getName());
+        dto.setDescription(department.getDescription());
+
+        // ✅ Utiliser les repositories pour compter (pas de lazy loading)
+        dto.setStudentCount((int) studentRepository.findByDepartmentId(department.getId()).size());
+        dto.setCourseCount((int) courseRepository.findByDepartmentId(department.getId()).size());
+
+        // ✅ AJOUT : Champs d'audit
+        dto.setCreatedAt(department.getCreatedAt());
+        dto.setUpdatedAt(department.getUpdatedAt());
+
+        return dto;
+    }
+
+    /**
+     * ✅ Convertir Entity → DTO (VERSION SIMPLE - pour forms)
+     *
+     * N'accède PAS aux collections lazy - Met des 0 par défaut
+     * AJOUT : Remplit createdAt et updatedAt
+     */
+    private DepartmentDTO convertToDTOSimple(Department department) {
+        DepartmentDTO dto = new DepartmentDTO();
+        dto.setId(department.getId());
+        dto.setCode(department.getCode());
+        dto.setName(department.getName());
+        dto.setDescription(department.getDescription());
+
+        // ✅ Pas d'accès aux collections - valeurs par défaut
+        dto.setStudentCount(0);
+        dto.setCourseCount(0);
+
+        // ✅ AJOUT : Champs d'audit
+        dto.setCreatedAt(department.getCreatedAt());
+        dto.setUpdatedAt(department.getUpdatedAt());
 
         return dto;
     }
