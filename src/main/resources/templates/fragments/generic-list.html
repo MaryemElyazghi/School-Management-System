@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<body>
+
+<!--
+    ✅ FRAGMENT GÉNÉRIQUE - LISTE D'ENTITÉS
+    
+    UTILISATION:
+    <div th:replace="~{fragments/generic-list :: list(
+        entityName='student',
+        entityNamePlural='students',
+        displayName='Élève',
+        displayNamePlural='Élèves',
+        icon='bi-people-fill',
+        iconColor='primary',
+        items=${students},
+        columns=${columns},
+        canCreate=true,
+        canEdit=true,
+        canDelete=true,
+        editRole='ADMIN,TEACHER',
+        deleteRole='ADMIN'
+    )}"></div>
+    
+    PARAMÈTRES:
+    - entityName: nom singulier (ex: 'student')
+    - entityNamePlural: nom pluriel (ex: 'students')
+    - displayName: nom affiché singulier (ex: 'Élève')
+    - displayNamePlural: nom affiché pluriel (ex: 'Élèves')
+    - icon: icône Bootstrap Icons (ex: 'bi-people-fill')
+    - iconColor: couleur (primary, success, warning, etc.)
+    - items: liste des items à afficher
+    - columns: liste des colonnes [{field:'name', label:'Nom'}, ...]
+    - canCreate: afficher le bouton "Ajouter" (true/false)
+    - canEdit: afficher le bouton "Modifier" (true/false)
+    - canDelete: afficher le bouton "Supprimer" (true/false)
+    - editRole: rôle requis pour modifier (ex: 'ADMIN,TEACHER')
+    - deleteRole: rôle requis pour supprimer (ex: 'ADMIN')
+-->
+
+<th:block th:fragment="list(entityName, entityNamePlural, displayName, displayNamePlural, icon, iconColor, items, columns, canCreate, canEdit, canDelete, editRole, deleteRole)">
+    <main class="container my-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>
+                    <i th:class="'bi ' + ${icon} + ' text-' + ${iconColor}"></i>
+                    <span th:text="'Liste des ' + ${displayNamePlural}"></span>
+                </h2>
+            </div>
+            <div class="col-md-4 text-end">
+                <!-- Bouton Ajouter (si autorisé) -->
+                <a th:if="${canCreate}" 
+                   sec:authorize="${'hasAnyRole(\'' + editRole + '\')'}">
+                   th:href="@{'/web/' + ${entityNamePlural} + '/new'}"
+                   th:class="'btn btn-' + ${iconColor}">
+                    <i class="bi bi-plus-circle"></i>
+                    <span th:text="'Ajouter un ' + ${displayName}"></span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <!-- Colonnes dynamiques -->
+                                <th th:each="col : ${columns}" th:text="${col.label}">Colonne</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Message si vide -->
+                            <tr th:if="${items.empty}">
+                                <td th:colspan="${columns.size() + 1}" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                    <p class="mt-2 mb-0" th:text="'Aucun ' + ${displayName.toLowerCase()} + ' trouvé'"></p>
+                                </td>
+                            </tr>
+
+                            <!-- Lignes de données -->
+                            <tr th:each="item : ${items}">
+                                <!-- Colonnes dynamiques -->
+                                <td th:each="col : ${columns}">
+                                    <!-- Valeur simple -->
+                                    <span th:if="${col.type == null or col.type == 'text'}" 
+                                          th:text="${#objects.invoke(item, 'get' + #strings.capitalize(col.field))}">
+                                    </span>
+                                    
+                                    <!-- Badge -->
+                                    <span th:if="${col.type == 'badge'}" 
+                                          th:class="'badge bg-' + ${col.badgeColor}"
+                                          th:text="${#objects.invoke(item, 'get' + #strings.capitalize(col.field))}">
+                                    </span>
+                                    
+                                    <!-- Date -->
+                                    <span th:if="${col.type == 'date'}" 
+                                          th:text="${#temporals.format(#objects.invoke(item, 'get' + #strings.capitalize(col.field)), 'dd/MM/yyyy')}">
+                                    </span>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <!-- Voir (toujours visible pour les authentifiés) -->
+                                        <a th:href="@{'/web/' + ${entityNamePlural} + '/' + ${item.id}}"
+                                           class="btn btn-info btn-sm" title="Détails">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <!-- Modifier -->
+                                        <a th:if="${canEdit}"
+                                           sec:authorize="${'hasAnyRole(\'' + editRole + '\')'}"
+                                           th:href="@{'/web/' + ${entityNamePlural} + '/' + ${item.id} + '/edit'}"
+                                           class="btn btn-warning btn-sm" title="Modifier">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+
+                                        <!-- Supprimer -->
+                                        <form th:if="${canDelete}"
+                                              sec:authorize="${'hasAnyRole(\'' + deleteRole + '\')'}"
+                                              th:action="@{'/web/' + ${entityNamePlural} + '/' + ${item.id} + '/delete'}"
+                                              method="post"
+                                              style="display: inline;"
+                                              th:onsubmit="'return confirm(\'Êtes-vous sûr de vouloir supprimer ce ' + ${displayName.toLowerCase()} + ' ?\');'">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</th:block>
+
+</body>
+</html>
