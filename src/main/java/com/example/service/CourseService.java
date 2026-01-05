@@ -3,6 +3,7 @@ package com.example.service;
 import com.example.dto.CourseDTO;
 import com.example.entity.Course;
 import com.example.entity.Department;
+import com.example.entity.Enrollment;
 import com.example.entity.Teacher;
 import com.example.exception.BusinessException;
 import com.example.exception.ResourceNotFoundException;
@@ -210,20 +211,65 @@ public class CourseService {
         return convertToDTO(updatedCourse);
     }
 
+    /**
+     * ✅ SUPPRESSION DE COURS - VERSION CORRIGÉE
+     *
+     * PROBLÈME RÉSOLU:
+     * - Supprime d'abord TOUS les enrollments (même DROPPED)
+     * - Puis supprime le cours
+     *
+     * ORDRE CRITIQUE:
+     * 1. Supprimer enrollments (références vers course)
+     * 2. Supprimer course
+     */
     public void deleteCourse(Long id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course", "id", id));
 
-        // Vérifier s'il y a des inscriptions pour ce cours
-        long enrollmentCount = enrollmentRepository.countByCourseId(id);
-        if (enrollmentCount > 0) {
-            throw new BusinessException(
-                    String.format("Cannot delete course '%s'. There are %d enrollment(s) associated with it.",
-                            course.getName(), enrollmentCount));
+        // ✅ CORRECTION : Supprimer TOUS les enrollments (pas seulement compter)
+        // Cela inclut ACTIVE, COMPLETED, FAILED, et DROPPED
+        List<Enrollment> enrollments = enrollmentRepository.findByCourseId(id);
+
+        if (!enrollments.isEmpty()) {
+            // Supprimer tous les enrollments
+            enrollmentRepository.deleteAll(enrollments);
         }
 
+        // Maintenant on peut supprimer le cours en toute sécurité
         courseRepository.delete(course);
     }
+
+    /**
+     * ✅ OPTION ALTERNATIVE: Supprimer avec vérification stricte
+     * (décommenter si vous préférez bloquer la suppression au lieu de forcer)
+     */
+    /*
+    public void deleteCourseStrict(Long id) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", "id", id));
+
+        // Vérifier s'il y a des inscriptions ACTIVES ou COMPLÉTÉES
+        long activeEnrollments = enrollmentRepository.findByCourseId(id)
+                .stream()
+                .filter(e -> e.getStatus() == Enrollment.EnrollmentStatus.ACTIVE ||
+                           e.getStatus() == Enrollment.EnrollmentStatus.COMPLETED)
+                .count();
+
+        if (activeEnrollments > 0) {
+            throw new BusinessException(
+                    String.format("Cannot delete course '%s'. There are %d active/completed enrollment(s). " +
+                            "Please drop all students first.",
+                            course.getName(), activeEnrollments));
+        }
+
+        // Supprimer les enrollments DROPPED et FAILED
+        List<Enrollment> droppedEnrollments = enrollmentRepository.findByCourseId(id);
+        enrollmentRepository.deleteAll(droppedEnrollments);
+
+        // Supprimer le cours
+        courseRepository.delete(course);
+    }
+    */
 
     public List<CourseDTO> getCoursesByDepartment(Long departmentId) {
         return courseRepository.findByDepartmentId(departmentId)

@@ -1,13 +1,16 @@
 package com.example.service;
 
 import com.example.dto.DepartmentDTO;
+import com.example.entity.Course;
 import com.example.entity.Department;
+import com.example.entity.Enrollment;
 import com.example.exception.BusinessException;
 import com.example.exception.ResourceNotFoundException;
 import com.example.repository.DepartmentRepository;
 import com.example.repository.StudentRepository;
 import com.example.repository.CourseRepository;
 import com.example.repository.TeacherRepository;
+import com.example.repository.EnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * ✅ Service de gestion des Filières (VERSION CORRIGÉE - LAZY LOADING FIX)
+ * ✅ Service de gestion des Filières - VERSION CORRIGÉE SUPPRESSION CASCADE
  */
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class DepartmentService {
     private final StudentRepository studentRepository;
     private final CourseRepository courseRepository;
     private final TeacherRepository teacherRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     // ========================================================================
     // READ - Consultation
@@ -43,7 +47,7 @@ public class DepartmentService {
                 .collect(Collectors.toList());
     }
 
-     /**
+    /**
      * ✅ Récupérer une filière par ID (AVEC statistiques)
      */
     public DepartmentDTO getDepartmentById(Long id) {
@@ -158,11 +162,22 @@ public class DepartmentService {
     }
 
     // ========================================================================
-    // DELETE - Suppression
+    // DELETE - Suppression - VERSION CORRIGÉE CASCADE
     // ========================================================================
 
     /**
-     * ✅ Supprimer une filière
+     * ✅ Supprimer une filière - VERSION CORRIGÉE
+     *
+     * PROBLÈME RÉSOLU:
+     * - Supprime en CASCADE dans le bon ordre
+     * - Gère les enrollments orphelins
+     *
+     * ORDRE DE SUPPRESSION CRITIQUE:
+     * 1. Enrollments (références courses + students)
+     * 2. Courses (références department)
+     * 3. Students (références department) - si vide
+     * 4. Teachers (références department) - si vide
+     * 5. Department
      */
     public void deleteDepartment(Long id) {
         // Vérifier que la filière existe
@@ -170,7 +185,21 @@ public class DepartmentService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Department", "id", id));
 
-        // ✅ PROTECTION 1: Vérifier les élèves
+        // ✅ ÉTAPE 1: Supprimer tous les enrollments liés aux cours de cette filière
+        List<Course> courses = courseRepository.findByDepartmentId(id);
+        for (Course course : courses) {
+            List<Enrollment> enrollments = enrollmentRepository.findByCourseId(course.getId());
+            if (!enrollments.isEmpty()) {
+                enrollmentRepository.deleteAll(enrollments);
+            }
+        }
+
+        // ✅ ÉTAPE 2: Supprimer tous les cours de cette filière
+        if (!courses.isEmpty()) {
+            courseRepository.deleteAll(courses);
+        }
+
+        // ✅ ÉTAPE 3: Vérifier les élèves
         long studentCount = studentRepository.findByDepartmentId(id).size();
         if (studentCount > 0) {
             throw new BusinessException(
@@ -184,21 +213,7 @@ public class DepartmentService {
             );
         }
 
-        // ✅ PROTECTION 2: Vérifier les cours
-        long courseCount = courseRepository.findByDepartmentId(id).size();
-        if (courseCount > 0) {
-            throw new BusinessException(
-                    String.format(
-                            "Impossible de supprimer la filière '%s'. " +
-                                    "Elle contient %d cours. " +
-                                    "Veuillez d'abord supprimer ou transférer les cours.",
-                            department.getName(),
-                            courseCount
-                    )
-            );
-        }
-
-        // ✅ PROTECTION 3: Vérifier les enseignants (optionnel)
+        // ✅ ÉTAPE 4: Vérifier les enseignants (optionnel - peut être supprimé)
         long teacherCount = teacherRepository.findByDepartmentId(id).size();
         if (teacherCount > 0) {
             throw new BusinessException(
@@ -212,9 +227,56 @@ public class DepartmentService {
             );
         }
 
-        // Si toutes les vérifications passent, supprimer
+        // ✅ ÉTAPE 5: Supprimer la filière
         departmentRepository.delete(department);
     }
+
+    /**
+     * ✅ OPTION ALTERNATIVE: Suppression forcée (supprime aussi les étudiants)
+     * Décommenter si vous voulez autoriser la suppression même avec des étudiants
+     */
+    /*
+    @Transactional
+    public void deleteDepartmentForce(Long id) {
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Department", "id", id));
+
+        // 1. Supprimer tous les enrollments des cours de cette filière
+        List<Course> courses = courseRepository.findByDepartmentId(id);
+        for (Course course : courses) {
+            enrollmentRepository.deleteAll(enrollmentRepository.findByCourseId(course.getId()));
+        }
+
+        // 2. Supprimer tous les cours
+        courseRepository.deleteAll(courses);
+
+        // 3. Supprimer tous les dossiers administratifs des étudiants
+        List<Student> students = studentRepository.findByDepartmentId(id);
+        for (Student student : students) {
+            if (student.getDossierAdministratif() != null) {
+                dossierRepository.delete(student.getDossierAdministratif());
+            }
+        }
+
+        // 4. Supprimer tous les enrollments des étudiants
+        for (Student student : students) {
+            enrollmentRepository.deleteAll(enrollmentRepository.findByStudentId(student.getId()));
+        }
+
+        // 5. Supprimer tous les étudiants
+        studentRepository.deleteAll(students);
+
+        // 6. Réaffecter ou supprimer les enseignants (selon votre choix)
+        // Option A: Erreur si enseignants présents
+        long teacherCount = teacherRepository.findByDepartmentId(id).size();
+        if (teacherCount > 0) {
+            throw new BusinessException("Veuillez d'abord réaffecter les enseignants");
+        }
+
+        // 7. Supprimer la filière
+        departmentRepository.delete(department);
+    }
+    */
 
     // ========================================================================
     // VALIDATIONS MÉTIER
@@ -249,24 +311,9 @@ public class DepartmentService {
     }
 
     // ========================================================================
-    // CONVERSIONS DTO ↔ ENTITY (VERSION CORRIGÉE ANTI-LAZY-LOADING)
+    // CONVERSIONS DTO ↔ ENTITY
     // ========================================================================
 
-    /**
-     * ✅ Convertir Entity → DTO (VERSION SIMPLE - pour listes)
-     *
-     * N'accède PAS aux collections lazy - Met des 0 par défaut
-     */
-// ========================================================================
-// CONVERSIONS DTO ↔ ENTITY (VERSION CORRIGÉE)
-// ========================================================================
-
-    /**
-     * ✅ Convertir Entity → DTO (VERSION COMPLÈTE - pour détails)
-     *
-     * Utilise les repositories pour compter au lieu d'accéder aux collections
-     * AJOUT : Remplit createdAt et updatedAt
-     */
     private DepartmentDTO convertToDTO(Department department) {
         DepartmentDTO dto = new DepartmentDTO();
         dto.setId(department.getId());
@@ -278,18 +325,13 @@ public class DepartmentService {
         dto.setStudentCount((int) studentRepository.findByDepartmentId(department.getId()).size());
         dto.setCourseCount((int) courseRepository.findByDepartmentId(department.getId()).size());
 
-        // ✅ AJOUT : Champs d'audit
+        // ✅ Champs d'audit
         dto.setCreatedAt(department.getCreatedAt());
         dto.setUpdatedAt(department.getUpdatedAt());
 
         return dto;
     }
 
-    /**
-     * ✅ Convertir Entity → DTO (VERSION AVEC STATS - pour listes)
-     *
-     * AJOUT : Remplit createdAt et updatedAt
-     */
     private DepartmentDTO convertToDTOWithStats(Department department) {
         DepartmentDTO dto = new DepartmentDTO();
         dto.setId(department.getId());
@@ -301,19 +343,13 @@ public class DepartmentService {
         dto.setStudentCount((int) studentRepository.findByDepartmentId(department.getId()).size());
         dto.setCourseCount((int) courseRepository.findByDepartmentId(department.getId()).size());
 
-        // ✅ AJOUT : Champs d'audit
+        // ✅ Champs d'audit
         dto.setCreatedAt(department.getCreatedAt());
         dto.setUpdatedAt(department.getUpdatedAt());
 
         return dto;
     }
 
-    /**
-     * ✅ Convertir Entity → DTO (VERSION SIMPLE - pour forms)
-     *
-     * N'accède PAS aux collections lazy - Met des 0 par défaut
-     * AJOUT : Remplit createdAt et updatedAt
-     */
     private DepartmentDTO convertToDTOSimple(Department department) {
         DepartmentDTO dto = new DepartmentDTO();
         dto.setId(department.getId());
@@ -325,16 +361,13 @@ public class DepartmentService {
         dto.setStudentCount(0);
         dto.setCourseCount(0);
 
-        // ✅ AJOUT : Champs d'audit
+        // ✅ Champs d'audit
         dto.setCreatedAt(department.getCreatedAt());
         dto.setUpdatedAt(department.getUpdatedAt());
 
         return dto;
     }
 
-    /**
-     * Convertir DTO → Entity
-     */
     private Department convertToEntity(DepartmentDTO dto) {
         Department department = new Department();
         department.setCode(dto.getCode());
