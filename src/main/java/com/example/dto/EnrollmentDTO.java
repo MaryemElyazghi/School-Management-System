@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+/**
+ * ✅ VERSION CORRIGÉE - EnrollmentDTO sans studentNumber
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,7 +21,7 @@ public class EnrollmentDTO {
     private Long studentId;
 
     private String studentName;
-    private String studentNumber;
+    // ✅ SUPPRIMÉ : studentNumber
 
     @NotNull(message = "Course ID is required")
     private Long courseId;

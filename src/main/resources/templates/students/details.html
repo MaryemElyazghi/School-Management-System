@@ -50,13 +50,10 @@
                 </div>
                 <div class="card-body">
                     <table class="table table-borderless">
+                        <!-- ✅ CORRECTION : ID comme unique identifiant -->
                         <tr>
                             <th width="40%">ID Étudiant :</th>
                             <td><strong th:text="${student.id}">1</strong></td>
-                        </tr>
-                        <tr>
-                            <th width="40%">Numéro Étudiant :</th>
-                            <td><strong th:text="${student.studentNumber}">STU001</strong></td>
                         </tr>
                         <tr>
                             <th>Nom Complet :</th>
@@ -125,7 +122,8 @@
                                 <th>Date de Création :</th>
                                 <td th:text="${student.dossierDateCreation != null ?
                                        #temporals.format(student.dossierDateCreation, 'dd/MM/yyyy') :
-                                       '-'}">01/01/2025</td>                            </tr>
+                                       '-'}">01/01/2025</td>
+                            </tr>
                         </table>
                     </div>
                     <div th:unless="${student.numeroInscription != null}">
@@ -185,18 +183,20 @@
                                 <td class="text-center">
                                     <!-- Voir le cours -->
                                     <a th:href="@{/web/courses/{id}(id=${enrollment.courseId})}"
-                                       class="btn btn-sm btn-info" title="Voir le cours">
+                                       class="btn btn-sm btn-info me-1" title="Voir le cours">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <!-- Se désinscrire -  pour ADMIN/TEACHER -->
+
+                                    <!-- ✅ CORRECTION : Bouton de désinscription pour ADMIN/TEACHER avec CSRF -->
                                     <form sec:authorize="hasAnyRole('ADMIN', 'TEACHER')"
                                           th:action="@{/web/students/{studentId}/drop/{enrollmentId}(studentId=${student.id}, enrollmentId=${enrollment.id})}"
                                           method="post"
-                                          style="display: inline;">
+                                          style="display: inline;"
+                                          onsubmit="return confirm('Confirmer la désinscription de ce cours ?');">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                         <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                title="Se désinscrire"
-                                                onclick="return confirm('Confirmer la désinscription de ce cours ?');">
-                                            <i class="bi bi-x-circle"></i>
+                                                title="Se désinscrire">
+                                            <i class="bi bi-x-circle"></i> Désinscrire
                                         </button>
                                     </form>
                                 </td>
@@ -224,253 +224,8 @@
                         Aucun cours disponible dans la filière de cet élève.
                     </div>
                     <div th:unless="${availableCourses == null || availableCourses.empty}">
-
-                        MaryemElyazghi/School-Management-System
-                        main
-
-                        GITHUB
-
-                        FIX MOI CE PROJET qui doit 4. Développer les fonctionnalités suivantes :
-                        § Gestion des Filières (CRUD + liste des élèves + liste des cours)
-                        § Gestion des Cours (CRUD + rattachement à une filière)
-                        § Gestion des Élèves (CRUD + affectation filière + inscription aux cours)
-                        § Création automatique du dossier administratif lors de l’ajout d’un élève.
-                        5. Générer le numeroInscription du dossier sous la forme : FILIERE-ANNEE-ID
-                        (exemple:INFO-2025-12)....tous tous
-
-                        21:36
-
-                        Identified DTO mapping issues and architectural inconsistencies throughout project.
-                        14s
-
-
-
-
-
-
-
-
-                        Je vais analyser votre projet et corriger tous les problèmes pour respecter les exigences. Voici les corrections nécessaires :
-
-                        🔧 Corrections à apporter
-
-                        2 étapes
-
-                        Vérifier la structure du répertoire de travail
-
-
-                        Orchestrated project reconstruction with detailed correction documentation.
-
-                        Je vais créer un document complet avec toutes les corrections nécessaires pour votre projet :
-
-
-                        30 étapes
-
-                        Presented 3 files
-
-                        Orchestrated comprehensive project framework completion successfully.
-
-                        ✅ Package de Corrections Complet - School Management System
-                        J'ai analysé votre projet en détail et préparé toutes les corrections nécessaires pour le rendre 100% conforme aux exigences du mini-projet.
-
-                        📊 Diagnostic
-                        Votre projet est excellent dans l'ensemble ! Il ne manque que quelques ajustements mineurs :
-
-                        ✅ Ce qui fonctionne parfaitement :
-
-                        Architecture globale (Spring Boot, JPA, Thymeleaf)
-                        Création automatique du dossier administratif ✓
-                        Format du numéro d'inscription : FILIERE-ANNEE-ID ✓
-                        CRUD complet pour toutes les entités ✓
-                        Sécurité et authentification ✓
-                        ❌ Ce qui nécessite des corrections :
-
-                        DTOs incomplets (champs manquants)
-                        Utilisation d'entités au lieu de DTOs dans 2 contrôleurs
-                        Templates essayant d'accéder à des propriétés inexistantes
-                        📦 Fichiers Fournis
-                        J'ai préparé 10 fichiers pour vous guider :
-
-                        📋 Documentation (3 fichiers)
-                        PACKAGE_RECAP.md ⭐ COMMENCEZ ICI - Vue d'ensemble et plan d'action
-                        CORRECTIONS_PROJET.md - Documentation détaillée de chaque correction
-                        GUIDE_DE_TEST.md - Tests complets pour valider le projet
-                        💻 Code Corrigé (7 fichiers)
-                        DepartmentDTO.java - DTO avec createdAt et updatedAt
-                        StudentDTO.java - DTO avec departmentCode et dossierDateCreation
-                        DepartmentWebController.java - Contrôleur utilisant le DTO
-                        StudentWebController.java - Contrôleur utilisant le DTO
-                        DepartmentService_ConversionMethods.java - Méthodes de conversion à copier
-                        StudentService_ConversionMethods.java - Méthodes de conversion à copier
-                        students_details_corrections.html - Blocs de template corrigés
-                        🎯 Plan d'Action (30 minutes)
-                        ⚡ Option Rapide (recommandée)
-                        1. DTOs (2 minutes)
-
-                        java
-                        // Dans DepartmentDTO.java, ajouter :
-                        private LocalDateTime createdAt;
-                        private LocalDateTime updatedAt;
-
-                        // Dans StudentDTO.java, ajouter :
-                        private String departmentCode;
-                        private LocalDate dossierDateCreation;
-                        2. Services (5 minutes)
-
-                        Copier-coller les méthodes de DepartmentService_ConversionMethods.java dans votre DepartmentService
-                        Copier-coller les méthodes de StudentService_ConversionMethods.java dans votre StudentService
-                        3. Contrôleurs (2 minutes)
-
-                        Dans DepartmentWebController.showDepartmentDetails(), remplacer la ligne qui utilise departmentRepository par departmentService.getDepartmentById(id)
-                        Dans StudentWebController.showStudentDetails(), remplacer la ligne qui utilise studentRepository par studentService.getStudentById(id)
-                        4. Template (3 minutes)
-
-                        Dans students/details.html, remplacer les 3 blocs indiqués dans students_details_corrections.html
-                        5. Compiler et tester (5 minutes)
-
-                        bash
-                        mvn clean install
-                        mvn spring-boot:run
-                        6. Vérifier (10 minutes)
-
-                        Créer un élève → Vérifier que le dossier est créé avec le bon format
-                        Voir les détails d'une filière → Vérifier que la date et les listes s'affichent
-                        Voir les détails d'un élève → Vérifier que tout s'affiche correctement
-                        📝 Liste de Vérification Finale
-                        Après les corrections, votre projet doit avoir :
-
-                        ✅ Gestion des Filières
-
-                        CRUD complet
-                        Liste des élèves par filière (visible dans détails)
-                        Liste des cours par filière (visible dans détails)
-                        Date de création affichée
-                        ✅ Gestion des Cours
-
-                        CRUD complet
-                        Rattachement obligatoire à une filière
-                        Validation du rattachement
-                        ✅ Gestion des Élèves
-
-                        CRUD complet
-                        Affectation obligatoire à une filière
-                        Inscription aux cours de sa filière uniquement
-                        Dossier administratif créé automatiquement
-                        Numéro d'inscription au format FILIERE-ANNEE-ID
-                        🚀 Résultat Attendu
-                        Une fois les corrections appliquées, vous aurez un projet production-ready qui :
-
-                        ✅ Respecte 100% des exigences du mini-projet
-                        ✅ Utilise les bonnes pratiques (DTOs, séparation des couches)
-                        ✅ N'a pas de problèmes de lazy loading
-                        ✅ Fonctionne parfaitement avec Thymeleaf
-
-                        💡 Conseils
-                        Commencez par PACKAGE_RECAP.md - Il contient le plan d'action détaillé étape par étape.
-
-                        Tous les fichiers fournis sont prêts à l'emploi - vous pouvez les copier directement dans votre projet ou les utiliser comme référence.
-
-                        Bon courage ! En 30 minutes, votre projet sera parfait ! 🎓
-
-                        Package recap
-                        Document · MD
-                        Corrections projet
-                        Document · MD
-                        Guide de test
-                        Document · MD
-                        Departmentdto
-                        Code · JAVA
-                        Studentdto
-                        Code · JAVA
-                        Departmentwebcontroller
-                        Code · JAVA
-                        Studentwebcontroller
-                        Code · JAVA
-                        Departmentservice conversionmethods
-                        Code · JAVA
-                        Studentservice conversionmethods
-                        Code · JAVA
-                        Students details corrections
-                        Code · HTML
-
-
-
-
-
-                        Claude est une IA et peut faire des erreurs. Veuillez vérifier les réponses.
-
-
-                        Students details corrections · HTML
-                        Copier
-
-                        <!-- ========================================================================
-                             SECTION CORRIGÉE : Filière et Dossier Administratif
-                             ======================================================================== -->
-
-                        <div class="col-md-6 mb-4">
-                            <div class="card h-100">
-                                <div class="card-header bg-success text-white">
-                                    <h5 class="mb-0">
-                                        <i class="bi bi-diagram-3"></i> Filière & Dossier Administratif
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <h6 class="text-muted mb-3">Filière</h6>
-                                    <table class="table table-borderless">
-                                        <tr>
-                                            <th width="40%">Nom :</th>
-                                            <!-- ✅ CORRECTION : Utilise departmentName au lieu de department.name -->
-                                            <td th:text="${student.departmentName ?: '-'}">-</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Code :</th>
-                                            <td>
-                                                <!-- ✅ CORRECTION : Utilise departmentCode au lieu de department.code -->
-                                                <span class="badge bg-success" th:if="${student.departmentCode != null}"
-                                                      th:text="${student.departmentCode}">CODE</span>
-                                                <span th:unless="${student.departmentCode != null}">-</span>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    <hr>
-
-                                    <h6 class="text-muted mb-3">Dossier Administratif</h6>
-
-                                    <!-- ✅ CORRECTION : Utilise numeroInscription au lieu de dossierAdministratif.numeroInscription -->
-                                    <div th:if="${student.numeroInscription != null}">
-                                        <table class="table table-borderless">
-                                            <tr>
-                                                <th width="40%">Numéro d'Inscription :</th>
-                                                <td>
-                            <span class="badge bg-info fs-6"
-                                  th:text="${student.numeroInscription}">GINF-2025-1</span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>Date de Création :</th>
-                                                <!-- ✅ CORRECTION : Utilise dossierDateCreation -->
-                                                <td th:text="${student.dossierDateCreation != null ?
-                                       #temporals.format(student.dossierDateCreation, 'dd/MM/yyyy') :
-                                       '-'}">01/01/2025</td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                    <div th:unless="${student.numeroInscription != null}">
-                                        <p class="text-muted">Aucun dossier administratif</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ========================================================================
-                             AUTRE CORRECTION : Section Cours disponibles
-                             ======================================================================== -->
-
-                        <!-- Dans la section "Inscription aux Cours" -->
                         <p class="text-muted mb-3">
                             <i class="bi bi-info-circle"></i>
-                            <!-- ✅ CORRECTION : Utilise departmentName au lieu de department?.name -->
                             Sélectionnez un cours de la filière <strong th:text="${student.departmentName}">Filière</strong> pour inscrire l'élève.
                         </p>
                         <div class="table-responsive">
@@ -486,7 +241,6 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <!-- ✅ Les cours affichés sont PRÉ-FILTRÉS: non inscrits et non complets -->
                                 <tr th:each="course : ${availableCourses}">
                                     <td><code th:text="${course.code}">CODE</code></td>
                                     <td th:text="${course.name}">Nom du cours</td>
@@ -499,12 +253,13 @@
                                         <span class="badge bg-success">Disponible</span>
                                     </td>
                                     <td class="text-center">
-                                        <!-- ✅ Bouton d'inscription direct (cours pré-filtrés) -->
+                                        <!-- ✅ CORRECTION : Bouton d'inscription avec CSRF -->
                                         <form th:action="@{/web/students/{studentId}/enroll/{courseId}(studentId=${student.id}, courseId=${course.id})}"
                                               method="post"
-                                              style="display: inline;">
-                                            <button type="submit" class="btn btn-sm btn-success"
-                                                    onclick="return confirm('Confirmer l\'inscription à ce cours ?');">
+                                              style="display: inline;"
+                                              onsubmit="return confirm('Confirmer l\'inscription à ce cours ?');">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                            <button type="submit" class="btn btn-sm btn-success">
                                                 <i class="bi bi-plus-circle"></i> Inscrire
                                             </button>
                                         </form>

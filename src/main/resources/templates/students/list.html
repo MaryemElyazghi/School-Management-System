@@ -22,7 +22,6 @@
             </a>
         </div>
     </div>
-
     <!-- Alerts -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill"></i>
@@ -43,7 +42,8 @@
                 <table class="table table-hover">
                     <thead class="table-light">
                     <tr>
-                        <th>Numéro Étudiant</th>
+                        <!-- ✅ CORRECTION : ID comme identifiant au lieu de studentNumber -->
+                        <th>ID Étudiant</th>
                         <th>Nom Complet</th>
                         <th>Email</th>
                         <th>Filière</th>
@@ -60,7 +60,7 @@
                     </tr>
                     <tr th:each="student : ${students}">
                         <td>
-                            <strong th:text="${student.studentNumber}"></strong>
+                            <strong th:text="${student.id}"></strong>
                         </td>
                         <td th:text="${student.fullName}"></td>
                         <td>
@@ -85,11 +85,13 @@
                                    class="btn btn-warning btn-sm" title="Modifier">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <!-- Supprimer - ADMIN uniquement -->
+                                <!-- ✅ CORRECTION SUPPRESSION : Utiliser CSRF token -->
                                 <form sec:authorize="hasRole('ADMIN')"
                                       th:action="@{/web/students/{id}/delete(id=${student.id})}"
-                                      method="post" style="display: inline;"
+                                      method="post"
+                                      style="display: inline;"
                                       onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet élève ?');">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
                                         <i class="bi bi-trash"></i>
                                     </button>

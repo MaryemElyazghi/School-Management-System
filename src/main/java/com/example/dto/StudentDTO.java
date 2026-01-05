@@ -9,11 +9,15 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+/**
+ * ✅ VERSION CORRIGÉE - StudentDTO sans studentNumber
+ * L'identifiant unique est désormais UNIQUEMENT l'ID
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class StudentDTO {
-    private Long id;
+    private Long id; // ✅ IDENTIFIANT UNIQUE
 
     @NotBlank(message = "First name is required")
     private String firstName;
@@ -36,7 +40,7 @@ public class StudentDTO {
     private String departmentCode;
     private String fullName;
 
-    // Numéro d'inscription du dossier administratif
+    // ✅ Numéro d'inscription du dossier administratif (format: FILIERE-ANNEE-ID)
     private String numeroInscription;
     private LocalDate dossierDateCreation;
 }

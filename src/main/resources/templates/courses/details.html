@@ -46,28 +46,28 @@
                     <table class="table table-borderless">
                         <tr>
                             <th width="30%">Code :</th>
-                            <td><strong th:text="${course.code}"></strong></td>
+                            <td><strong th:text="${course.code}">CODE</strong></td>
                         </tr>
                         <tr>
                             <th>Intitulé :</th>
-                            <td th:text="${course.name}"></td>
+                            <td th:text="${course.name}">Nom du cours</td>
                         </tr>
                         <tr>
                             <th>Filière :</th>
                             <td>
-                                    <span class="badge bg-success"
-                                          th:text="${course.departmentName}"></span>
+                                <span class="badge bg-success"
+                                      th:text="${course.departmentName}">GINF</span>
                             </td>
                         </tr>
                         <tr>
                             <th>Crédits :</th>
                             <td>
-                                <span class="badge bg-info" th:text="${course.credits}"></span>
+                                <span class="badge bg-info" th:text="${course.credits}">6</span>
                             </td>
                         </tr>
                         <tr>
                             <th>Enseignant :</th>
-                            <td th:text="${course.teacherName != null ? course.teacherName : 'Non assigné'}"></td>
+                            <td th:text="${course.teacherName != null ? course.teacherName : 'Non assigné'}">Dr. X</td>
                         </tr>
                     </table>
 
@@ -75,7 +75,7 @@
 
                     <div th:if="${course.description}">
                         <h6 class="text-muted mb-2">Description</h6>
-                        <p th:text="${course.description}"></p>
+                        <p th:text="${course.description}">Description du cours</p>
                     </div>
                 </div>
             </div>
@@ -92,9 +92,9 @@
                     <div class="mb-4">
                         <h2 class="display-4 mb-0"
                             th:text="${course.currentEnrollmentCount}"
-                            th:classappend="${course.isFull} ? 'text-danger' : 'text-success'"></h2>
+                            th:classappend="${course.isFull} ? 'text-danger' : 'text-success'">0</h2>
                         <p class="text-muted mb-0">
-                            / <span th:text="${course.maxStudents}"></span> étudiants max
+                            / <span th:text="${course.maxStudents}">30</span> étudiants max
                         </p>
                     </div>
 
@@ -129,7 +129,7 @@
                     <h5 class="mb-0">
                         <i class="bi bi-people-fill"></i>
                         Étudiants Inscrits
-                        <span class="badge bg-white text-primary" th:text="${enrollments.size()}"></span>
+                        <span class="badge bg-white text-primary" th:text="${enrollments.size()}">0</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -137,7 +137,8 @@
                         <table class="table table-hover">
                             <thead class="table-light">
                             <tr>
-                                <th>Numéro</th>
+                                <!-- ✅ CORRECTION : ID au lieu de Numéro -->
+                                <th>ID Étudiant</th>
                                 <th>Nom Complet</th>
                                 <th>Date d'Inscription</th>
                                 <th>Statut</th>
@@ -152,24 +153,25 @@
                                 </td>
                             </tr>
                             <tr th:each="enrollment : ${enrollments}">
+                                <!-- ✅ CORRECTION : Afficher studentId au lieu de studentNumber -->
                                 <td>
-                                    <strong th:text="${enrollment.studentNumber}"></strong>
+                                    <strong th:text="${enrollment.studentId}">1</strong>
                                 </td>
-                                <td th:text="${enrollment.studentName}"></td>
-                                <td th:text="${#temporals.format(enrollment.enrollmentDate, 'dd/MM/yyyy')}"></td>
+                                <td th:text="${enrollment.studentName}">Ahmed Bennani</td>
+                                <td th:text="${#temporals.format(enrollment.enrollmentDate, 'dd/MM/yyyy')}">01/01/2025</td>
                                 <td>
                                     <span class="badge"
                                           th:if="${enrollment.status != null}"
                                           th:classappend="${enrollment.status.name() == 'ACTIVE'} ? 'bg-success' :
                                                            ${enrollment.status.name() == 'COMPLETED'} ? 'bg-primary' :
                                                            ${enrollment.status.name() == 'FAILED'} ? 'bg-danger' : 'bg-secondary'"
-                                          th:text="${enrollment.status.name()}"></span>
+                                          th:text="${enrollment.status.name()}">ACTIVE</span>
                                     <span th:if="${enrollment.status == null}" class="text-muted">-</span>
                                 </td>
                                 <td>
                                     <span th:if="${enrollment.grade != null}"
                                           th:text="${enrollment.grade} + '/20'"
-                                          th:classappend="${enrollment.grade >= 10} ? 'text-success fw-bold' : 'text-danger fw-bold'"></span>
+                                          th:classappend="${enrollment.grade >= 10} ? 'text-success fw-bold' : 'text-danger fw-bold'">15/20</span>
                                     <span th:if="${enrollment.grade == null}" class="text-muted">-</span>
                                 </td>
                                 <td class="text-center">
@@ -246,7 +248,7 @@
     </div>
 </main>
 
-<!-- Modals pour les notes (placés en dehors du tableau) -->
+<!-- Modals pour les notes -->
 <th:block th:each="enrollment : ${enrollments}">
     <div class="modal fade" th:id="${'gradeModal' + enrollment.id}" tabindex="-1">
         <div class="modal-dialog">
@@ -257,8 +259,9 @@
                 </div>
                 <form th:action="@{/web/courses/{courseId}/enrollments/{enrollmentId}/grade(courseId=${course.id}, enrollmentId=${enrollment.id})}" method="post">
                     <div class="modal-body">
-                        <p><strong>Étudiant:</strong> <span th:text="${enrollment.studentName}"></span></p>
-                        <p><strong>Numéro:</strong> <span th:text="${enrollment.studentNumber}"></span></p>
+                        <p><strong>Étudiant:</strong> <span th:text="${enrollment.studentName}">Nom</span></p>
+                        <!-- ✅ CORRECTION : Afficher ID au lieu de studentNumber -->
+                        <p><strong>ID:</strong> <span th:text="${enrollment.studentId}">1</span></p>
                         <hr/>
                         <div class="mb-3">
                             <label class="form-label">Note (sur 20)</label>

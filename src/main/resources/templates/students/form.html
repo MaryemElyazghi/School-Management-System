@@ -37,21 +37,21 @@
                           method="post"
                           th:object="${student}">
 
-                        <!-- Numéro Étudiant -->
-                        <div class="mb-3">
-                            <label for="studentNumber" class="form-label">
-                                Numéro Étudiant <span class="text-danger">*</span>
-                            </label>
-                            <input type="text"
-                                   class="form-control"
-                                   id="studentNumber"
-                                   th:field="*{studentNumber}"
-                                   th:classappend="${#fields.hasErrors('studentNumber')} ? 'is-invalid' : ''"
-                                   placeholder="Ex: STU001"
-                                   required>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('studentNumber')}"
-                                 th:errors="*{studentNumber}"></div>
-                        </div>
+<!--                        &lt;!&ndash; Numéro Étudiant &ndash;&gt;-->
+<!--                        <div class="mb-3">-->
+<!--                            <label for="studentNumber" class="form-label">-->
+<!--                                Numéro Étudiant <span class="text-danger">*</span>-->
+<!--                            </label>-->
+<!--                            <input type="text"-->
+<!--                                   class="form-control"-->
+<!--                                   id="studentNumber"-->
+<!--                                   th:field="*{studentNumber}"-->
+<!--                                   th:classappend="${#fields.hasErrors('studentNumber')} ? 'is-invalid' : ''"-->
+<!--                                   placeholder="Ex: STU001"-->
+<!--                                   required>-->
+<!--                            <div class="invalid-feedback" th:if="${#fields.hasErrors('studentNumber')}"-->
+<!--                                 th:errors="*{studentNumber}"></div>-->
+<!--                        </div>-->
 
                         <!-- Prénom -->
                         <div class="mb-3">
