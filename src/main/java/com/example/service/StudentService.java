@@ -3,6 +3,7 @@ package com.example.service;
 import com.example.dto.StudentDTO;
 import com.example.entity.Department;
 import com.example.entity.DossierAdministratif;
+import com.example.entity.Enrollment;
 import com.example.entity.Student;
 import com.example.exception.BusinessException;
 import com.example.exception.ResourceNotFoundException;
@@ -106,6 +107,7 @@ public class StudentService {
 
         return convertToDTO(savedStudent);
     }
+
     public StudentDTO updateStudent(Long id, StudentDTO studentDTO) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", "id", id));
@@ -153,20 +155,37 @@ public class StudentService {
     }
 
     /**
-     * ✅ Supprimer un élève
-     * La suppression inclut:
-     * - Suppression de toutes les inscriptions aux cours
-     * - Suppression du dossier administratif (via cascade)
-     * - Suppression de l'élève
+     * ✅ Supprimer un élève - VERSION CORRIGÉE
+     *
+     * ORDRE DE SUPPRESSION CRITIQUE:
+     * 1. Supprimer tous les enrollments (références vers student)
+     * 2. Supprimer le dossier administratif (orphanRemoval devrait le gérer, mais on force)
+     * 3. Supprimer l'étudiant
      */
+    @Transactional
     public void deleteStudent(Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", "id", id));
 
-        // ✅ Supprimer toutes les inscriptions de l'élève en premier
-        enrollmentRepository.deleteByStudentId(id);
+        // ✅ ÉTAPE 1: Supprimer TOUS les enrollments de l'élève
+        // Important: doit être fait AVANT la suppression de l'étudiant
+        List<Enrollment> enrollments = enrollmentRepository.findByStudentId(id);
+        if (!enrollments.isEmpty()) {
+            enrollmentRepository.deleteAll(enrollments);
+            // Force le flush pour s'assurer que les suppressions sont effectuées
+            enrollmentRepository.flush();
+        }
 
-        // ✅ Le dossier administratif sera supprimé automatiquement (CascadeType.ALL + orphanRemoval)
+        // ✅ ÉTAPE 2: Supprimer explicitement le dossier administratif
+        // Même si cascade devrait fonctionner, on le fait explicitement pour plus de sûreté
+        if (student.getDossierAdministratif() != null) {
+            DossierAdministratif dossier = student.getDossierAdministratif();
+            student.setDossierAdministratif(null); // Casser la relation d'abord
+            dossierRepository.delete(dossier);
+            dossierRepository.flush();
+        }
+
+        // ✅ ÉTAPE 3: Supprimer l'étudiant
         studentRepository.delete(student);
     }
 

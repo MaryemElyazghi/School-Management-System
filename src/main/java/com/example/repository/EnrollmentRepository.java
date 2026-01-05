@@ -9,8 +9,15 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * ✅ EnrollmentRepository - VERSION CORRIGÉE
+ *
+ * Hérite de JpaRepository qui fournit automatiquement:
+ * - save(), delete(), flush(), etc.
+ */
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
+
     List<Enrollment> findByStudentId(Long studentId);
     List<Enrollment> findByCourseId(Long courseId);
 
@@ -32,6 +39,7 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     // ✅ Compter les inscriptions actives d'un élève
     long countByStudentIdAndStatus(Long studentId, Enrollment.EnrollmentStatus status);
 
-    // ✅ Supprimer toutes les inscriptions d'un élève
-    void deleteByStudentId(Long studentId);
+    // ✅ SUPPRIMÉ: deleteByStudentId - on utilisera deleteAll() à la place
+    // car deleteByStudentId peut causer des problèmes avec Spring Data JPA
+    // La méthode deleteAll() de JpaRepository est plus fiable
 }
