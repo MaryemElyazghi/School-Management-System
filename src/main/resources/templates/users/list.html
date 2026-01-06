@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container my-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="bi bi-people-fill text-info"></i>
+                Liste des Utilisateurs
+            </h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/web/users/new" class="btn btn-info">
+                <i class="bi bi-plus-circle"></i> Créer un Utilisateur
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h3 class="text-danger" th:text="${adminCount}">0</h3>
+                    <p class="mb-0 text-muted">Administrateurs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h3 class="text-primary" th:text="${studentCount}">0</h3>
+                    <p class="mb-0 text-muted">Étudiants</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom d'utilisateur</th>
+                        <th>Email</th>
+                        <th>Nom Complet</th>
+                        <th>Rôle</th>
+                        <th>Statut</th>
+                        <th>Date de Création</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${users.empty}">
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                            <p class="mt-2 mb-0">Aucun utilisateur trouvé</p>
+                        </td>
+                    </tr>
+                    <tr th:each="user : ${users}">
+                        <td><strong th:text="${user.id}">1</strong></td>
+                        <td th:text="${user.username}">admin</td>
+                        <td>
+                            <a th:href="'mailto:' + ${user.email}" th:text="${user.email}">
+                                email@example.com
+                            </a>
+                        </td>
+                        <td th:text="${user.fullName}">John Doe</td>
+                        <td>
+                            <span class="badge bg-danger" th:if="${user.role.name() == 'ADMIN'}">
+                                <i class="bi bi-shield-fill"></i> <span th:text="${user.roleDisplay}">ADMIN</span>
+                            </span>
+                            <span class="badge bg-warning text-dark" th:if="${user.role.name() == 'TEACHER'}">
+                                <i class="bi bi-person-badge"></i> <span th:text="${user.roleDisplay}">TEACHER</span>
+                            </span>
+                            <span class="badge bg-primary" th:if="${user.role.name() == 'STUDENT'}">
+                                <i class="bi bi-person"></i> <span th:text="${user.roleDisplay}">STUDENT</span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success" th:if="${user.enabled}">
+                                <i class="bi bi-check-circle"></i> Activé
+                            </span>
+                            <span class="badge bg-secondary" th:unless="${user.enabled}">
+                                <i class="bi bi-x-circle"></i> Désactivé
+                            </span>
+                        </td>
+                        <td th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'dd/MM/yyyy HH:mm') : '-'}">
+                            01/01/2025
+                        </td>
+                        <td class="text-center table-actions">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <!-- Modifier -->
+                                <a th:href="@{/web/users/{id}/edit(id=${user.id})}"
+                                   class="btn btn-warning btn-sm" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <!-- Supprimer -->
+                                <form th:action="@{/web/users/{id}/delete(id=${user.id})}"
+                                      method="post"
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

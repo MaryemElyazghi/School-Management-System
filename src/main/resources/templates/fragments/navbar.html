@@ -40,6 +40,13 @@
                         <i class="bi bi-book-fill"></i> Cours
                     </a>
                 </li>
+
+                <!-- ✅ NOUVEAU : Menu Utilisateurs - ADMIN uniquement -->
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" href="/web/users">
+                        <i class="bi bi-person-gear"></i> Utilisateurs
+                    </a>
+                </li>
             </ul>
 
             <!-- Menu de droite -->
