@@ -1,17 +1,14 @@
 package com.example.service;
 
 import com.example.dto.DepartmentDTO;
-import com.example.entity.Course;
 import com.example.entity.Department;
-import com.example.entity.Enrollment;
 import com.example.exception.BusinessException;
 import com.example.exception.ResourceNotFoundException;
+import com.example.repository.CourseRepository;
 import com.example.repository.DepartmentRepository;
 import com.example.repository.StudentRepository;
-import com.example.repository.CourseRepository;
-import com.example.repository.TeacherRepository;
-import com.example.repository.EnrollmentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,318 +16,214 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * ✅ Service de gestion des Filières - VERSION CORRIGÉE SUPPRESSION CASCADE
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * SERVICE FILIÈRE - SANS TEACHER
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * RÈGLE DE SUPPRESSION STRICTE :
+ * - ⛔ BLOQUÉ si des ÉTUDIANTS sont affectés
+ * - ⛔ BLOQUÉ si des COURS sont rattachés
+ * - ✅ AUTORISÉ uniquement si vide
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class DepartmentService {
 
     private final DepartmentRepository departmentRepository;
     private final StudentRepository studentRepository;
     private final CourseRepository courseRepository;
-    private final TeacherRepository teacherRepository;
-    private final EnrollmentRepository enrollmentRepository;
 
-    // ========================================================================
-    // READ - Consultation
-    // ========================================================================
+    // ════════════════════════════════════════════════════════════════════════════
+    // LECTURE (READ)
+    // ════════════════════════════════════════════════════════════════════════════
 
-    /**
-     * ✅ Récupérer toutes les filières AVEC statistiques
-     * Utilise les repositories pour éviter le lazy loading
-     */
     public List<DepartmentDTO> getAllDepartments() {
         return departmentRepository.findAll()
                 .stream()
-                .map(this::convertToDTOWithStats) // ✅ Version avec statistiques
+                .map(this::convertToDTOWithStats)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * ✅ Récupérer une filière par ID (AVEC statistiques)
-     */
     public DepartmentDTO getDepartmentById(Long id) {
         Department department = departmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Department", "id", id));
-
-        return convertToDTO(department); // ✅ Version complète avec statistiques
+                .orElseThrow(() -> new ResourceNotFoundException("Department", "id", id));
+        return convertToDTOWithStats(department);
     }
 
-    /**
-     * ✅ Récupérer une filière par code
-     */
     public DepartmentDTO getDepartmentByCode(String code) {
         Department department = departmentRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Department", "code", code));
-
-        return convertToDTO(department);
+                .orElseThrow(() -> new ResourceNotFoundException("Department", "code", code));
+        return convertToDTOWithStats(department);
     }
 
-    // ========================================================================
-    // CREATE - Création
-    // ========================================================================
+    // ════════════════════════════════════════════════════════════════════════════
+    // CRÉATION (CREATE)
+    // ════════════════════════════════════════════════════════════════════════════
 
-    /**
-     * ✅ Créer une nouvelle filière
-     */
     public DepartmentDTO createDepartment(DepartmentDTO departmentDTO) {
-        // ✅ VALIDATION 1: Format du code (alphanumérique uniquement)
-        if (!isValidDepartmentCode(departmentDTO.getCode())) {
-            throw new BusinessException(
-                    "Le code de la filière doit être alphanumérique uniquement (A-Z, 0-9). " +
-                            "Caractères interdits: espaces, tirets, underscores, etc."
-            );
-        }
+        log.info("📝 Création d'une nouvelle filière: {}", departmentDTO.getCode());
 
-        // ✅ VALIDATION 2: Unicité du code
-        if (departmentRepository.existsByCode(departmentDTO.getCode())) {
-            throw new BusinessException(
-                    "Le code de filière '" + departmentDTO.getCode() + "' existe déjà. " +
-                            "Veuillez choisir un code différent."
-            );
-        }
+        validateDepartmentData(departmentDTO, null);
 
-        // ✅ VALIDATION 3: Unicité du nom (optionnel mais recommandé)
-        departmentRepository.findByName(departmentDTO.getName()).ifPresent(existing -> {
-            throw new BusinessException(
-                    "Une filière avec le nom '" + departmentDTO.getName() + "' existe déjà."
-            );
-        });
-
-        // Conversion DTO → Entity
         Department department = convertToEntity(departmentDTO);
-
-        // Sauvegarde
         Department saved = departmentRepository.save(department);
+        departmentRepository.flush();
 
-        // Conversion Entity → DTO
+        log.info("✅ Filière créée avec succès: {} (ID={})", saved.getCode(), saved.getId());
+
         return convertToDTOSimple(saved);
     }
 
-    // ========================================================================
-    // UPDATE - Modification
-    // ========================================================================
+    // ════════════════════════════════════════════════════════════════════════════
+    // MODIFICATION (UPDATE)
+    // ════════════════════════════════════════════════════════════════════════════
 
-    /**
-     * ✅ Mettre à jour une filière existante
-     */
     public DepartmentDTO updateDepartment(Long id, DepartmentDTO departmentDTO) {
-        // Vérifier que la filière existe
+        log.info("📝 Modification de la filière ID: {}", id);
+
         Department department = departmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Department", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Department", "id", id));
 
-        // ✅ VALIDATION 1: Format du code
-        if (!isValidDepartmentCode(departmentDTO.getCode())) {
-            throw new BusinessException(
-                    "Le code de la filière doit être alphanumérique uniquement."
-            );
-        }
+        validateDepartmentData(departmentDTO, id);
 
-        // ✅ VALIDATION 2: Si le code a changé, vérifier l'unicité
-        if (!department.getCode().equals(departmentDTO.getCode())) {
-            if (departmentRepository.existsByCode(departmentDTO.getCode())) {
-                throw new BusinessException(
-                        "Le code de filière '" + departmentDTO.getCode() + "' est déjà utilisé."
-                );
-            }
-        }
-
-        // ✅ VALIDATION 3: Si le nom a changé, vérifier l'unicité
-        if (!department.getName().equals(departmentDTO.getName())) {
-            departmentRepository.findByName(departmentDTO.getName()).ifPresent(existing -> {
-                if (!existing.getId().equals(id)) {
-                    throw new BusinessException(
-                            "Une filière avec le nom '" + departmentDTO.getName() + "' existe déjà."
-                    );
-                }
-            });
-        }
-
-        // Mise à jour des champs
         department.setCode(departmentDTO.getCode());
         department.setName(departmentDTO.getName());
         department.setDescription(departmentDTO.getDescription());
 
-        // Sauvegarde
         Department updated = departmentRepository.save(department);
+        departmentRepository.flush();
+
+        log.info("✅ Filière modifiée avec succès");
 
         return convertToDTOSimple(updated);
     }
 
-    // ========================================================================
-    // DELETE - Suppression - VERSION CORRIGÉE CASCADE
-    // ========================================================================
+    // ════════════════════════════════════════════════════════════════════════════
+    // SUPPRESSION (DELETE) - STRATÉGIE STRICTE
+    // ════════════════════════════════════════════════════════════════════════════
 
     /**
-     * ✅ Supprimer une filière - VERSION CORRIGÉE
-     *
-     * PROBLÈME RÉSOLU:
-     * - Supprime en CASCADE dans le bon ordre
-     * - Gère les enrollments orphelins
-     *
-     * ORDRE DE SUPPRESSION CRITIQUE:
-     * 1. Enrollments (références courses + students)
-     * 2. Courses (références department)
-     * 3. Students (références department) - si vide
-     * 4. Teachers (références department) - si vide
-     * 5. Department
+     * ╔═══════════════════════════════════════════════════════════════════════════╗
+     * ║  SUPPRESSION FILIÈRE - STRATÉGIE STRICTE (SANS TEACHER)                  ║
+     * ╠═══════════════════════════════════════════════════════════════════════════╣
+     * ║  ⛔ BLOQUÉ si des ÉTUDIANTS sont affectés                                ║
+     * ║  ⛔ BLOQUÉ si des COURS sont rattachés                                   ║
+     * ║  ✅ AUTORISÉ uniquement si la filière est vide                           ║
+     * ╚═══════════════════════════════════════════════════════════════════════════╝
      */
-    public void deleteDepartment(Long id) {
-        // Vérifier que la filière existe
-        Department department = departmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Department", "id", id));
-
-        // ✅ ÉTAPE 1: Supprimer tous les enrollments liés aux cours de cette filière
-        List<Course> courses = courseRepository.findByDepartmentId(id);
-        for (Course course : courses) {
-            List<Enrollment> enrollments = enrollmentRepository.findByCourseId(course.getId());
-            if (!enrollments.isEmpty()) {
-                enrollmentRepository.deleteAll(enrollments);
-            }
-        }
-
-        // ✅ ÉTAPE 2: Supprimer tous les cours de cette filière
-        if (!courses.isEmpty()) {
-            courseRepository.deleteAll(courses);
-        }
-
-        // ✅ ÉTAPE 3: Vérifier les élèves
-        long studentCount = studentRepository.findByDepartmentId(id).size();
-        if (studentCount > 0) {
-            throw new BusinessException(
-                    String.format(
-                            "Impossible de supprimer la filière '%s'. " +
-                                    "Elle contient %d élève(s). " +
-                                    "Veuillez d'abord transférer ou supprimer les élèves.",
-                            department.getName(),
-                            studentCount
-                    )
-            );
-        }
-
-        // ✅ ÉTAPE 4: Vérifier les enseignants (optionnel - peut être supprimé)
-        long teacherCount = teacherRepository.findByDepartmentId(id).size();
-        if (teacherCount > 0) {
-            throw new BusinessException(
-                    String.format(
-                            "Impossible de supprimer la filière '%s'. " +
-                                    "%d enseignant(s) y sont affectés. " +
-                                    "Veuillez d'abord les réaffecter.",
-                            department.getName(),
-                            teacherCount
-                    )
-            );
-        }
-
-        // ✅ ÉTAPE 5: Supprimer la filière
-        departmentRepository.delete(department);
-    }
-
-    /**
-     * ✅ OPTION ALTERNATIVE: Suppression forcée (supprime aussi les étudiants)
-     * Décommenter si vous voulez autoriser la suppression même avec des étudiants
-     */
-    /*
     @Transactional
-    public void deleteDepartmentForce(Long id) {
+    public void deleteDepartment(Long id) {
+        log.info("🗑️ ══════════════════════════════════════════════════════════");
+        log.info("🗑️ SUPPRESSION FILIÈRE - ID: {}", id);
+        log.info("🗑️ ══════════════════════════════════════════════════════════");
+
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Department", "id", id));
 
-        // 1. Supprimer tous les enrollments des cours de cette filière
-        List<Course> courses = courseRepository.findByDepartmentId(id);
-        for (Course course : courses) {
-            enrollmentRepository.deleteAll(enrollmentRepository.findByCourseId(course.getId()));
+        String deptName = department.getName();
+        String deptCode = department.getCode();
+        log.info("📋 Filière trouvée: {} ({}) - ID={}", deptName, deptCode, id);
+
+        // ═══ ÉTAPE 1: Vérifier les ÉTUDIANTS ═══
+        long studentCount = studentRepository.findByDepartmentId(id).size();
+        log.info("📊 Nombre d'étudiants: {}", studentCount);
+
+        if (studentCount > 0) {
+            log.warn("⛔ SUPPRESSION BLOQUÉE - Étudiants présents");
+            throw new BusinessException(String.format(
+                    "Impossible de supprimer la filière '%s' (%s).\n" +
+                            "• %d étudiant(s) affecté(s) à cette filière.\n\n" +
+                            "Actions possibles :\n" +
+                            "• Transférer les étudiants vers une autre filière\n" +
+                            "• Supprimer les étudiants individuellement",
+                    deptName, deptCode, studentCount));
         }
 
-        // 2. Supprimer tous les cours
-        courseRepository.deleteAll(courses);
+        // ═══ ÉTAPE 2: Vérifier les COURS ═══
+        long courseCount = courseRepository.findByDepartmentId(id).size();
+        log.info("📊 Nombre de cours: {}", courseCount);
 
-        // 3. Supprimer tous les dossiers administratifs des étudiants
-        List<Student> students = studentRepository.findByDepartmentId(id);
-        for (Student student : students) {
-            if (student.getDossierAdministratif() != null) {
-                dossierRepository.delete(student.getDossierAdministratif());
-            }
+        if (courseCount > 0) {
+            log.warn("⛔ SUPPRESSION BLOQUÉE - Cours présents");
+            throw new BusinessException(String.format(
+                    "Impossible de supprimer la filière '%s' (%s).\n" +
+                            "• %d cours rattaché(s) à cette filière.\n\n" +
+                            "Actions possibles :\n" +
+                            "• Transférer les cours vers une autre filière\n" +
+                            "• Supprimer les cours individuellement",
+                    deptName, deptCode, courseCount));
         }
 
-        // 4. Supprimer tous les enrollments des étudiants
-        for (Student student : students) {
-            enrollmentRepository.deleteAll(enrollmentRepository.findByStudentId(student.getId()));
-        }
+        // ═══ ÉTAPE 3: Suppression autorisée ═══
+        log.info("✅ Aucune dépendance détectée - Suppression autorisée");
+        log.info("🔄 Suppression de la filière...");
 
-        // 5. Supprimer tous les étudiants
-        studentRepository.deleteAll(students);
-
-        // 6. Réaffecter ou supprimer les enseignants (selon votre choix)
-        // Option A: Erreur si enseignants présents
-        long teacherCount = teacherRepository.findByDepartmentId(id).size();
-        if (teacherCount > 0) {
-            throw new BusinessException("Veuillez d'abord réaffecter les enseignants");
-        }
-
-        // 7. Supprimer la filière
         departmentRepository.delete(department);
-    }
-    */
+        departmentRepository.flush();
 
-    // ========================================================================
-    // VALIDATIONS MÉTIER
-    // ========================================================================
-
-    /**
-     * ✅ Valider le format du code de filière
-     */
-    private boolean isValidDepartmentCode(String code) {
-        if (code == null || code.isEmpty()) {
-            return false;
-        }
-        return code.matches("^[A-Za-z0-9]+$");
+        log.info("✅ ══════════════════════════════════════════════════════════");
+        log.info("✅ FILIÈRE SUPPRIMÉE AVEC SUCCÈS: {} ({}) - ID={}", deptName, deptCode, id);
+        log.info("✅ ══════════════════════════════════════════════════════════");
     }
 
-    // ========================================================================
+    // ════════════════════════════════════════════════════════════════════════════
     // STATISTIQUES
-    // ========================================================================
+    // ════════════════════════════════════════════════════════════════════════════
 
-    /**
-     * ✅ Obtenir le nombre d'élèves dans une filière
-     */
     public long getStudentCount(Long departmentId) {
         return studentRepository.findByDepartmentId(departmentId).size();
     }
 
-    /**
-     * ✅ Obtenir le nombre de cours dans une filière
-     */
     public long getCourseCount(Long departmentId) {
         return courseRepository.findByDepartmentId(departmentId).size();
     }
 
-    // ========================================================================
-    // CONVERSIONS DTO ↔ ENTITY
-    // ========================================================================
-
-    private DepartmentDTO convertToDTO(Department department) {
-        DepartmentDTO dto = new DepartmentDTO();
-        dto.setId(department.getId());
-        dto.setCode(department.getCode());
-        dto.setName(department.getName());
-        dto.setDescription(department.getDescription());
-
-        // ✅ Utiliser les repositories pour éviter lazy loading
-        dto.setStudentCount((int) studentRepository.findByDepartmentId(department.getId()).size());
-        dto.setCourseCount((int) courseRepository.findByDepartmentId(department.getId()).size());
-
-        // ✅ Champs d'audit
-        dto.setCreatedAt(department.getCreatedAt());
-        dto.setUpdatedAt(department.getUpdatedAt());
-
-        return dto;
+    public boolean canDelete(Long departmentId) {
+        long studentCount = studentRepository.findByDepartmentId(departmentId).size();
+        long courseCount = courseRepository.findByDepartmentId(departmentId).size();
+        return studentCount == 0 && courseCount == 0;
     }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // VALIDATIONS
+    // ════════════════════════════════════════════════════════════════════════════
+
+    private void validateDepartmentData(DepartmentDTO dto, Long excludeId) {
+        if (dto.getCode() == null || dto.getCode().trim().isEmpty()) {
+            throw new BusinessException("Le code de la filière est obligatoire");
+        }
+
+        if (!dto.getCode().matches("^[A-Za-z0-9]+$")) {
+            throw new BusinessException(
+                    "Le code de la filière doit être alphanumérique uniquement (A-Z, 0-9)");
+        }
+
+        departmentRepository.findByCode(dto.getCode()).ifPresent(existing -> {
+            if (excludeId == null || !existing.getId().equals(excludeId)) {
+                throw new BusinessException(
+                        "Le code de filière '" + dto.getCode() + "' existe déjà");
+            }
+        });
+
+        if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+            throw new BusinessException("Le nom de la filière est obligatoire");
+        }
+
+        departmentRepository.findByName(dto.getName()).ifPresent(existing -> {
+            if (excludeId == null || !existing.getId().equals(excludeId)) {
+                throw new BusinessException(
+                        "Une filière avec le nom '" + dto.getName() + "' existe déjà");
+            }
+        });
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // CONVERSIONS
+    // ════════════════════════════════════════════════════════════════════════════
 
     private DepartmentDTO convertToDTOWithStats(Department department) {
         DepartmentDTO dto = new DepartmentDTO();
@@ -339,11 +232,9 @@ public class DepartmentService {
         dto.setName(department.getName());
         dto.setDescription(department.getDescription());
 
-        // ✅ Utiliser les repositories pour compter (pas de lazy loading)
         dto.setStudentCount((int) studentRepository.findByDepartmentId(department.getId()).size());
         dto.setCourseCount((int) courseRepository.findByDepartmentId(department.getId()).size());
 
-        // ✅ Champs d'audit
         dto.setCreatedAt(department.getCreatedAt());
         dto.setUpdatedAt(department.getUpdatedAt());
 
@@ -356,15 +247,10 @@ public class DepartmentService {
         dto.setCode(department.getCode());
         dto.setName(department.getName());
         dto.setDescription(department.getDescription());
-
-        // ✅ Pas d'accès aux collections - valeurs par défaut
         dto.setStudentCount(0);
         dto.setCourseCount(0);
-
-        // ✅ Champs d'audit
         dto.setCreatedAt(department.getCreatedAt());
         dto.setUpdatedAt(department.getUpdatedAt());
-
         return dto;
     }
 
