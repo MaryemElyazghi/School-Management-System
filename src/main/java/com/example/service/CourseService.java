@@ -4,13 +4,11 @@ import com.example.dto.CourseDTO;
 import com.example.entity.Course;
 import com.example.entity.Department;
 import com.example.entity.Enrollment;
-import com.example.entity.Teacher;
 import com.example.exception.BusinessException;
 import com.example.exception.ResourceNotFoundException;
 import com.example.repository.CourseRepository;
 import com.example.repository.DepartmentRepository;
 import com.example.repository.EnrollmentRepository;
-import com.example.repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -43,7 +41,6 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final DepartmentRepository departmentRepository;
-    private final TeacherRepository teacherRepository;
     private final EnrollmentRepository enrollmentRepository;
 
     // ════════════════════════════════════════════════════════════════════════════
@@ -70,12 +67,6 @@ public class CourseService {
                 .collect(Collectors.toList());
     }
 
-    public List<CourseDTO> searchCourses(String keyword) {
-        return courseRepository.searchCourses(keyword)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
 
     // ════════════════════════════════════════════════════════════════════════════
     // MÉTHODES POUR ÉTUDIANTS (accès restreint par filière)
@@ -196,14 +187,6 @@ public class CourseService {
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Department", "id", courseDTO.getDepartmentId()));
             course.setDepartment(department);
-        }
-
-        // Changement d'enseignant
-        if (courseDTO.getTeacherId() != null) {
-            Teacher teacher = teacherRepository.findById(courseDTO.getTeacherId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Teacher", "id", courseDTO.getTeacherId()));
-            course.setTeacher(teacher);
         }
 
         Course updatedCourse = courseRepository.save(course);
@@ -363,11 +346,6 @@ public class CourseService {
             dto.setDepartmentName(course.getDepartment().getName());
         }
 
-        if (course.getTeacher() != null) {
-            dto.setTeacherId(course.getTeacher().getId());
-            dto.setTeacherName(course.getTeacher().getFullName());
-        }
-
         // Utiliser le repository pour éviter le lazy loading
         int enrollmentCount = (int) enrollmentRepository.countByCourseId(course.getId());
         dto.setCurrentEnrollmentCount(enrollmentCount);
@@ -390,13 +368,6 @@ public class CourseService {
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Department", "id", dto.getDepartmentId()));
             course.setDepartment(department);
-        }
-
-        if (dto.getTeacherId() != null) {
-            Teacher teacher = teacherRepository.findById(dto.getTeacherId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Teacher", "id", dto.getTeacherId()));
-            course.setTeacher(teacher);
         }
 
         return course;

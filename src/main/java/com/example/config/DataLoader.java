@@ -19,7 +19,6 @@ public class DataLoader implements CommandLineRunner {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
-    private final TeacherRepository teacherRepository;
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final DossierAdministratifRepository dossierRepository;
@@ -57,8 +56,8 @@ public class DataLoader implements CommandLineRunner {
         log.info("Created {} departments", departmentRepository.count());
 
         // ========== ADMIN USER ==========
-        User adminUser = createUser("admin", "admin@school.com", "admin123", Role.ADMIN);
-        log.info("Created admin user: admin/admin123");
+        User adminUser = createUser("admin", "admin@school.com", "Admin12345678", Role.ADMIN);
+        log.info("Created admin user: admin/Admin12345678");
 
         // ========== STUDENTS ==========
 
@@ -106,69 +105,52 @@ public class DataLoader implements CommandLineRunner {
 
         log.info("Created {} students", studentRepository.count());
 
-        // ========== TEACHERS ==========
-        Teacher teacher1 = createTeacher(
-                "PROF001", "Dr. Mohammed", "EL HADDAD", "m.alaoui@school.com",
-                "0698765432", "Computer Science", ginf
-        );
 
-        Teacher teacher2 = createTeacher(
-                "PROF002", "Dr. Aicha", "Sebti", "a.sebti@school.com",
-                "0698765433", "Networks and Telecommunications", gstr
-        );
-
-        Teacher teacher3 = createTeacher(
-                "PROF003", "Dr. Karim", "Hassani", "k.hassani@school.com",
-                "0698765434", "Industrial Engineering", gil
-        );
-
-        log.info("Created {} teachers", teacherRepository.count());
-
-        // ========== COURSES ==========
+       // ========== COURSES ==========
 
         // Cours GINF
         Course course1 = createCourse(
                 "Programmation Java Avancée", "GINF301",
                 "Concepts avancés de Java: POO, Collections, Streams, Spring Boot",
-                6, 30, ginf, teacher1
+                6, 30, ginf
         );
 
         Course course2 = createCourse(
                 "Bases de Données", "GINF302",
                 "Conception et gestion de bases de données relationnelles",
-                5, 30, ginf, teacher1
+                5, 30, ginf
         );
 
         Course course3 = createCourse(
                 "Développement Web", "GINF303",
                 "HTML, CSS, JavaScript, React, Spring Boot",
-                6, 25, ginf, teacher1
+                6, 25, ginf
         );
 
         // Cours GSTR
         Course course4 = createCourse(
                 "Réseaux et Protocoles", "GSTR301",
                 "TCP/IP, Routage, Switching, Sécurité réseau",
-                6, 30, gstr, teacher2
+                6, 30, gstr
         );
 
         Course course5 = createCourse(
                 "Télécommunications", "GSTR302",
                 "Systèmes de télécommunications modernes",
-                5, 30, gstr, teacher2
+                5, 30, gstr
         );
 
         // Cours GIL
         Course course6 = createCourse(
                 "Gestion de Production", "GIL301",
                 "Planification et contrôle de la production",
-                6, 25, gil, teacher3
+                6, 25, gil
         );
 
         Course course7 = createCourse(
                 "Logistique et Supply Chain", "GIL302",
                 "Gestion de la chaîne logistique",
-                5, 25, gil, teacher3
+                5, 25, gil
         );
 
         log.info("Created {} courses", courseRepository.count());
@@ -255,22 +237,9 @@ public class DataLoader implements CommandLineRunner {
         savedStudent.setDossierAdministratif(savedDossier);
         return studentRepository.save(savedStudent);    }
 
-    private Teacher createTeacher(String empNumber, String firstName, String lastName,
-                                  String email, String phone, String specialization, Department dept) {
-        Teacher teacher = new Teacher();
-        teacher.setEmployeeNumber(empNumber);
-        teacher.setFirstName(firstName);
-        teacher.setLastName(lastName);
-        teacher.setEmail(email);
-        teacher.setPhone(phone);
-        teacher.setSpecialization(specialization);
-        teacher.setHireDate(LocalDate.now().minusYears(5));
-        teacher.setDepartment(dept);
-        return teacherRepository.save(teacher);
-    }
 
     private Course createCourse(String name, String code, String description,
-                                int credits, int maxStudents, Department dept, Teacher teacher) {
+                                int credits, int maxStudents, Department dept) {
         Course course = new Course();
         course.setName(name);
         course.setCode(code);
@@ -278,8 +247,7 @@ public class DataLoader implements CommandLineRunner {
         course.setCredits(credits);
         course.setMaxStudents(maxStudents);
         course.setDepartment(dept);
-        course.setTeacher(teacher);
-        return courseRepository.save(course);
+           return courseRepository.save(course);
     }
 
     private void createEnrollment(Student student, Course course, Double grade) {

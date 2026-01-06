@@ -49,8 +49,6 @@ public class User extends BaseEntity implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Student student;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private Teacher teacher;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

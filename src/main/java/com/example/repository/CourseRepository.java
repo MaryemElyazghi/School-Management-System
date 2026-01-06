@@ -13,8 +13,6 @@ import java.util.Optional;
 public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findByCode(String code);
     List<Course> findByDepartmentId(Long departmentId);
-    List<Course> findByTeacherId(Long teacherId);
-
     // Courses disponibles pour un étudiant (de sa filière)
     @Query("SELECT c FROM Course c WHERE c.department.id = :departmentId")
     List<Course> findAvailableCoursesForDepartment(@Param("departmentId") Long departmentId);
